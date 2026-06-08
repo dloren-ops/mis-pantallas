@@ -90,6 +90,10 @@
     <string name="generate_title">Generar varias cuentas</string>
     <string name="generate_desc">Cargá el correo (y datos comunes) y se crean varias cuentas, una por cliente. Después asignás PIN/perfil y las enviás.</string>
     <string name="how_many_clients">¿Para cuántos clientes?</string>
+    <string name="generate_profiles">Perfiles</string>
+    <string name="generate_profiles_title">Generar perfiles con nombres</string>
+    <string name="generate_profiles_desc">Cargá correo, contraseña y plataforma. Se crean los perfiles (Mura, Bura, Dayira…) con su PIN (9876, 8876, 7876…), según cuántos elijas. Van a Nuevas.</string>
+    <string name="how_many_profiles">¿Cuántos perfiles?</string>
 
     <!-- Pegado inteligente -->
     <string name="paste_data">Pegar datos</string>

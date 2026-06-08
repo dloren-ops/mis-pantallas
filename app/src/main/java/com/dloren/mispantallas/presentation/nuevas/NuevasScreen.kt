@@ -1,6 +1,7 @@
 package com.dloren.mispantallas.presentation.nuevas
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -21,7 +23,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -66,6 +71,7 @@ fun NuevasScreen(
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showGenerate by remember { mutableStateOf(false) }
+    var showGenerateProfiles by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -79,6 +85,9 @@ fun NuevasScreen(
                 actions = {
                     TextButton(onClick = { showGenerate = true }) {
                         Text(stringResource(R.string.generate))
+                    }
+                    TextButton(onClick = { showGenerateProfiles = true }) {
+                        Text(stringResource(R.string.generate_profiles))
                     }
                 }
             )
@@ -131,6 +140,16 @@ fun NuevasScreen(
             onGenerate = { email, password, platform, duration, count ->
                 viewModel.generate(email, password, platform, duration, count)
                 showGenerate = false
+            }
+        )
+    }
+
+    if (showGenerateProfiles) {
+        GenerateProfilesDialog(
+            onDismiss = { showGenerateProfiles = false },
+            onGenerate = { email, password, platform, duration, count ->
+                viewModel.generateNamedProfiles(email, password, platform, duration, count)
+                showGenerateProfiles = false
             }
         )
     }
@@ -258,6 +277,135 @@ private fun GenerateDialog(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(2, 3, 4, 5).forEach { n ->
+                        FilterChip(
+                            selected = count == n,
+                            onClick = { count = n },
+                            label = { Text(n.toString()) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = email.isNotBlank(),
+                onClick = {
+                    onGenerate(email, password, platform, duration.toIntOrNull() ?: 30, count)
+                }
+            ) { Text(stringResource(R.string.generate)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GenerateProfilesDialog(
+    onDismiss: () -> Unit,
+    onGenerate: (String, String, String, Int, Int) -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var platform by remember { mutableStateOf("") }
+    var duration by remember { mutableStateOf("30") }
+    var count by remember { mutableStateOf(2) }
+    var platformExpanded by remember { mutableStateOf(false) }
+    val maxProfiles = NuevasViewModel.PROFILE_NAMES.size
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.generate_profiles_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.generate_profiles_desc),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text(stringResource(R.string.field_email)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.field_password)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                // Selector de plataforma con colores.
+                ExposedDropdownMenuBox(
+                    expanded = platformExpanded,
+                    onExpandedChange = { platformExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = platform,
+                        onValueChange = { platform = it },
+                        label = { Text(stringResource(R.string.field_platform)) },
+                        singleLine = true,
+                        leadingIcon = if (platform.isNotBlank()) {
+                            {
+                                Box(
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clip(CircleShape)
+                                        .background(Platforms.colorFor(platform))
+                                )
+                            }
+                        } else null,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = platformExpanded)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = platformExpanded,
+                        onDismissRequest = { platformExpanded = false }
+                    ) {
+                        Platforms.all.forEach { p ->
+                            DropdownMenuItem(
+                                text = { Text(p.name) },
+                                leadingIcon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clip(CircleShape)
+                                            .background(p.color)
+                                    )
+                                },
+                                onClick = {
+                                    platform = p.name
+                                    platformExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = duration,
+                    onValueChange = { duration = it.filter { c -> c.isDigit() } },
+                    label = { Text(stringResource(R.string.field_duration)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = stringResource(R.string.how_many_profiles),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.horizontalScroll(rememberScrollState())
+                ) {
+                    (1..maxProfiles).forEach { n ->
                         FilterChip(
                             selected = count == n,
                             onClick = { count = n },

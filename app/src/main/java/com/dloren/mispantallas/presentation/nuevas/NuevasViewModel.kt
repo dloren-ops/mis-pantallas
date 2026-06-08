@@ -67,4 +67,38 @@ class NuevasViewModel(
             }
         }
     }
+
+    /**
+     * Genera cuentas con nombres de perfil y PIN predefinidos, en orden:
+     * perfiles [PROFILE_NAMES] y PIN 9876, 8876, 7876, ... (primer dígito que baja).
+     */
+    fun generateNamedProfiles(
+        email: String,
+        password: String,
+        platform: String,
+        durationDays: Int,
+        count: Int
+    ) {
+        val n = count.coerceIn(1, PROFILE_NAMES.size)
+        viewModelScope.launch {
+            for (i in 0 until n) {
+                saveAccount(
+                    Account(
+                        email = email.trim(),
+                        password = password.trim(),
+                        platform = platform.trim(),
+                        profileName = PROFILE_NAMES[i],
+                        pin = "${9 - i}876",
+                        durationDays = durationDays.coerceAtLeast(1),
+                        status = AccountStatus.NOT_SOLD
+                    )
+                )
+            }
+        }
+    }
+
+    companion object {
+        /** Nombres de perfil predefinidos, en orden de asignación. */
+        val PROFILE_NAMES = listOf("Mura", "Bura", "Dayira", "Marara", "Anya", "Maun", "Iyira")
+    }
 }
