@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -41,7 +42,9 @@ class AccountListViewModel(
     private val apkInstaller: ApkInstaller
 ) : ViewModel() {
 
+    // Lista principal: solo las cuentas VENDIDAS (las que llevás el control).
     val accounts: StateFlow<List<Account>> = observeAccounts()
+        .map { list -> list.filter { it.isSold } }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

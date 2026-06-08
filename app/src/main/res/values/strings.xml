@@ -81,6 +81,16 @@
     <string name="renew_due_today">¡Renová hoy mismo!</string>
     <string name="renew_overdue">Renovación vencida hace %1$d días</string>
 
+    <!-- Pantalla de nuevas (sin vender) -->
+    <string name="nuevas_title">Nuevas (sin vender)</string>
+    <string name="open_nuevas">Nuevas</string>
+    <string name="no_nuevas">No tenés cuentas sin vender.\nTocá + para agregar o usá \"Generar\".</string>
+    <string name="no_sales_yet">Todavía no enviaste ninguna venta.\nEntrá a \"Nuevas\" para cargar y enviar cuentas.</string>
+    <string name="generate">Generar</string>
+    <string name="generate_title">Generar varias cuentas</string>
+    <string name="generate_desc">Cargá el correo (y datos comunes) y se crean varias cuentas, una por cliente. Después asignás PIN/perfil y las enviás.</string>
+    <string name="how_many_clients">¿Para cuántos clientes?</string>
+
     <!-- Pegado inteligente -->
     <string name="paste_data">Pegar datos</string>
     <string name="paste_hint">Pegá todos los datos juntos (correo, contraseña, PIN, plataforma, etc.) en cualquier orden.</string>

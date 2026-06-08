@@ -1,6 +1,5 @@
-package com.dloren.mispantallas.presentation.list
+package com.dloren.mispantallas.presentation.nuevas
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,27 +13,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Autorenew
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,66 +54,39 @@ import com.dloren.mispantallas.domain.model.Account
 import com.dloren.mispantallas.presentation.AppViewModelProvider
 import com.dloren.mispantallas.presentation.platform.Platforms
 import com.dloren.mispantallas.presentation.whatsapp.WhatsAppLauncher
-import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountListScreen(
+fun NuevasScreen(
+    onBack: () -> Unit,
+    onAddAccount: () -> Unit,
     onAccountClick: (Long) -> Unit,
-    onOpenRenewals: () -> Unit,
-    onOpenNuevas: () -> Unit,
-    viewModel: AccountListViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: NuevasViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
-    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    // Escuchar eventos puntuales (Toasts).
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            val msg = when (event) {
-                is UpdateEvent.UpToDate -> context.getString(R.string.up_to_date)
-                is UpdateEvent.NoReleases -> context.getString(R.string.no_releases)
-                is UpdateEvent.PermissionRequested ->
-                    context.getString(R.string.install_permission_needed)
-                is UpdateEvent.Error ->
-                    context.getString(R.string.update_error, event.message)
-            }
-            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-        }
-    }
+    var showGenerate by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.title_accounts)) },
+                title = { Text(stringResource(R.string.nuevas_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    }
+                },
                 actions = {
-                    TextButton(onClick = onOpenNuevas) {
-                        Text(stringResource(R.string.open_nuevas))
-                    }
-                    IconButton(onClick = onOpenRenewals) {
-                        Icon(
-                            Icons.Filled.Autorenew,
-                            contentDescription = stringResource(R.string.open_renewals)
-                        )
-                    }
-                    if (updateState is UpdateUiState.Checking) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(end = 16.dp)
-                                .size(22.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        IconButton(onClick = { viewModel.checkForUpdates() }) {
-                            Icon(
-                                Icons.Filled.Refresh,
-                                contentDescription = stringResource(R.string.check_updates)
-                            )
-                        }
+                    TextButton(onClick = { showGenerate = true }) {
+                        Text(stringResource(R.string.generate))
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddAccount) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_account))
+            }
         }
     ) { padding ->
         if (accounts.isEmpty()) {
@@ -122,7 +98,7 @@ fun AccountListScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = stringResource(R.string.no_sales_yet),
+                    text = stringResource(R.string.no_nuevas),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyLarge
                 )
@@ -136,12 +112,12 @@ fun AccountListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(accounts, key = { it.id }) { account ->
-                    AccountCard(
+                    NuevaCard(
                         account = account,
                         onClick = { onAccountClick(account.id) },
                         onSend = {
                             WhatsAppLauncher.send(context, account)
-                            viewModel.markSoldIfNeeded(account)
+                            viewModel.markSold(account)
                         }
                     )
                 }
@@ -149,35 +125,12 @@ fun AccountListScreen(
         }
     }
 
-    val state = updateState
-    if (state is UpdateUiState.Available) {
-        AlertDialog(
-            onDismissRequest = { if (!state.downloading) viewModel.dismissUpdate() },
-            title = { Text(stringResource(R.string.update_available_title)) },
-            text = {
-                if (state.downloading) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Text("  " + stringResource(R.string.downloading_update))
-                    }
-                } else {
-                    Text(stringResource(R.string.update_available_body, state.release.tag))
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = !state.downloading,
-                    onClick = { viewModel.downloadAndInstall() }
-                ) { Text(stringResource(R.string.update_now)) }
-            },
-            dismissButton = {
-                TextButton(
-                    enabled = !state.downloading,
-                    onClick = { viewModel.dismissUpdate() }
-                ) { Text(stringResource(R.string.later)) }
+    if (showGenerate) {
+        GenerateDialog(
+            onDismiss = { showGenerate = false },
+            onGenerate = { email, password, platform, duration, count ->
+                viewModel.generate(email, password, platform, duration, count)
+                showGenerate = false
             }
         )
     }
@@ -185,11 +138,7 @@ fun AccountListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AccountCard(
-    account: Account,
-    onClick: () -> Unit,
-    onSend: () -> Unit
-) {
+private fun NuevaCard(account: Account, onClick: () -> Unit, onSend: () -> Unit) {
     val platformColor = Platforms.colorFor(account.platform)
     val title = account.platform.ifBlank { account.email.ifBlank { "Cuenta" } }
     Card(
@@ -203,7 +152,6 @@ private fun AccountCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar con la inicial y el color de la plataforma.
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -241,8 +189,6 @@ private fun AccountCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                StatusBadge(account)
-                CountdownLabel(account)
             }
             IconButton(onClick = onSend) {
                 Icon(
@@ -255,40 +201,82 @@ private fun AccountCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StatusBadge(account: Account) {
-    val sold = account.isSold
-    val bg = if (sold) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-    Text(
-        text = stringResource(if (sold) R.string.status_sold else R.string.status_not_sold),
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.Bold,
-        color = Color.White,
-        modifier = Modifier
-            .padding(top = 6.dp)
-            .clip(RoundedCornerShape(50))
-            .background(bg)
-            .padding(horizontal = 10.dp, vertical = 3.dp)
-    )
-}
+private fun GenerateDialog(
+    onDismiss: () -> Unit,
+    onGenerate: (String, String, String, Int, Int) -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var platform by remember { mutableStateOf("") }
+    var duration by remember { mutableStateOf("30") }
+    var count by remember { mutableStateOf(2) }
 
-@Composable
-private fun CountdownLabel(account: Account) {
-    // El conteo del cliente solo aplica si está vendida.
-    if (!account.isSold) return
-    val remaining = account.remainingClientDays()
-    val (text, color) = when {
-        remaining < 0L -> stringResource(R.string.expired_ago, -remaining) to Color(0xFFB3261E)
-        remaining == 0L -> stringResource(R.string.last_day) to Color(0xFFB3261E)
-        remaining == 1L -> stringResource(R.string.one_day_left) to Color(0xFFE65100)
-        remaining <= 3L -> stringResource(R.string.days_left, remaining) to Color(0xFFE65100)
-        else -> stringResource(R.string.days_left, remaining) to Color(0xFF2E7D32)
-    }
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.SemiBold,
-        color = color,
-        modifier = Modifier.padding(top = 4.dp)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.generate_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.generate_desc),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text(stringResource(R.string.field_email)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.field_password)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = platform,
+                    onValueChange = { platform = it },
+                    label = { Text(stringResource(R.string.field_platform)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = duration,
+                    onValueChange = { duration = it.filter { c -> c.isDigit() } },
+                    label = { Text(stringResource(R.string.field_duration)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = stringResource(R.string.how_many_clients),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(2, 3, 4, 5).forEach { n ->
+                        FilterChip(
+                            selected = count == n,
+                            onClick = { count = n },
+                            label = { Text(n.toString()) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = email.isNotBlank(),
+                onClick = {
+                    onGenerate(email, password, platform, duration.toIntOrNull() ?: 30, count)
+                }
+            ) { Text(stringResource(R.string.generate)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
     )
 }

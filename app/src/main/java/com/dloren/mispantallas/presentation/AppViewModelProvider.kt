@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dloren.mispantallas.MisPantallasApp
 import com.dloren.mispantallas.presentation.form.AccountFormViewModel
 import com.dloren.mispantallas.presentation.list.AccountListViewModel
+import com.dloren.mispantallas.presentation.nuevas.NuevasViewModel
 import com.dloren.mispantallas.presentation.renewals.RenewalsViewModel
 
 /**
@@ -41,6 +42,14 @@ object AppViewModelProvider {
             val container = misPantallasApp().container
             RenewalsViewModel(
                 observeAccounts = container.observeAccounts,
+                saveAccount = container.saveAccount
+            )
+        }
+        initializer {
+            val container = misPantallasApp().container
+            NuevasViewModel(
+                observeAccounts = container.observeAccounts,
+                markAsSold = container.markAsSold,
                 saveAccount = container.saveAccount
             )
         }
