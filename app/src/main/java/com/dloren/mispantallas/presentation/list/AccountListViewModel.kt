@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -44,10 +44,29 @@ class AccountListViewModel(
     private val apkInstaller: ApkInstaller
 ) : ViewModel() {
 
-    // Lista principal: solo las cuentas VENDIDAS (las que llevás el control).
-    val accounts: StateFlow<List<Account>> = observeAccounts()
-        .map { list -> list.filter { it.isSold } }
-        .stateIn(
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
+
+    fun onQueryChange(q: String) { _query.value = q }
+
+    // Lista principal: si no hay búsqueda, muestra las VENDIDAS; si hay búsqueda,
+    // busca en TODAS (vendidas y no vendidas) por correo, número, plataforma o perfil.
+    val accounts: StateFlow<List<Account>> =
+        combine(observeAccounts(), _query) { list, q ->
+            val query = q.trim()
+            if (query.isBlank()) {
+                list.filter { it.isSold }
+            } else {
+                val digits = query.filter { it.isDigit() }
+                list.filter { acc ->
+                    acc.email.contains(query, ignoreCase = true) ||
+                        acc.platform.contains(query, ignoreCase = true) ||
+                        acc.profileName.contains(query, ignoreCase = true) ||
+                        (digits.isNotEmpty() &&
+                            acc.clientPhone.filter { c -> c.isDigit() }.contains(digits))
+                }
+            }
+        }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()

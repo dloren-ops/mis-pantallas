@@ -86,6 +86,8 @@
     <string name="open_nuevas">Nuevas</string>
     <string name="no_nuevas">No tenés cuentas sin vender.\nTocá + para agregar o usá \"Generar\".</string>
     <string name="no_sales_yet">Todavía no enviaste ninguna venta.\nEntrá a \"Nuevas\" para cargar y enviar cuentas.</string>
+    <string name="search_hint">Buscar por correo o número…</string>
+    <string name="no_results">Sin resultados para tu búsqueda.</string>
     <string name="generate">Generar</string>
     <string name="generate_title">Generar varias cuentas</string>
     <string name="generate_desc">Cargá el correo (y datos comunes) y se crean varias cuentas, una por cliente. Después asignás PIN/perfil y las enviás.</string>
