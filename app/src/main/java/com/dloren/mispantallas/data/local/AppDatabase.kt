@@ -1,11 +1,11 @@
-package com.dloren.mispantallas.data
+package com.dloren.mispantallas.data.local
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Account::class], version = 1, exportSchema = false)
+@Database(entities = [AccountEntity::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun accountDao(): AccountDao

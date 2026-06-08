@@ -1,18 +1,14 @@
-package com.dloren.mispantallas.data
+package com.dloren.mispantallas.domain.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import java.util.concurrent.TimeUnit
 
 /**
- * Representa una cuenta / pantalla de streaming en alquiler.
+ * Modelo de dominio de una cuenta / pantalla de streaming en alquiler.
  *
- * @param startDateMillis fecha de inicio del alquiler (epoch millis).
- * @param durationDays duración del alquiler en días.
+ * Es un modelo puro (sin dependencias de Android ni de Room): contiene los datos
+ * y la lógica de negocio del alquiler (cuenta regresiva).
  */
-@Entity(tableName = "accounts")
 data class Account(
-    @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val email: String = "",
     val password: String = "",
@@ -28,12 +24,11 @@ data class Account(
         get() = startDateMillis + TimeUnit.DAYS.toMillis(durationDays.toLong())
 
     /**
-     * Días restantes hasta el vencimiento (puede ser negativo si ya venció).
-     * Se calcula respecto al momento [now].
+     * Días restantes hasta el vencimiento (negativo si ya venció), respecto a [now].
+     * Se redondea hacia arriba: mientras quede parte del día, cuenta como 1.
      */
     fun remainingDays(now: Long = System.currentTimeMillis()): Long {
         val diff = endDateMillis - now
-        // Redondeo hacia arriba: mientras quede algo del día, cuenta como 1.
         return Math.ceil(diff.toDouble() / TimeUnit.DAYS.toMillis(1)).toLong()
     }
 

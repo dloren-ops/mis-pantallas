@@ -39,6 +39,9 @@
     <string name="check_updates">Buscar actualizaciones</string>
     <string name="checking_updates">Buscando actualizaciones…</string>
     <string name="up_to_date">Ya tenés la última versión instalada.</string>
+    <string name="no_releases">Todavía no hay versiones publicadas.</string>
+    <string name="install_permission_needed">Permití la instalación de apps desconocidas y volvé a intentar.</string>
+    <string name="cancel">Cancelar</string>
     <string name="update_available_title">Actualización disponible</string>
     <string name="update_available_body">Hay una nueva versión (%1$s). ¿Querés descargarla e instalarla?</string>
     <string name="downloading_update">Descargando actualización…</string>

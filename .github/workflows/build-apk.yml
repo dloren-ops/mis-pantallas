@@ -3,6 +3,8 @@ name: Build & Release APK
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -38,6 +40,7 @@ jobs:
              "out/mis-pantallas-v1.0.${{ github.run_number }}.apk"
 
       - name: Publish GitHub Release
+        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}

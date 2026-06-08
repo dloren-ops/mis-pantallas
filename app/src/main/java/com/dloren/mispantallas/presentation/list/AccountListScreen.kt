@@ -1,8 +1,10 @@
-package com.dloren.mispantallas.ui
+package com.dloren.mispantallas.presentation.list
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,10 +31,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,45 +40,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dloren.mispantallas.R
-import com.dloren.mispantallas.data.Account
-import com.dloren.mispantallas.util.UpdateManager
-import com.dloren.mispantallas.util.WhatsAppHelper
-import kotlinx.coroutines.launch
-import android.widget.Toast
+import com.dloren.mispantallas.domain.model.Account
+import com.dloren.mispantallas.presentation.AppViewModelProvider
+import com.dloren.mispantallas.presentation.whatsapp.WhatsAppLauncher
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountListScreen(
-    viewModel: AccountViewModel,
     onAddAccount: () -> Unit,
-    onAccountClick: (Long) -> Unit
+    onAccountClick: (Long) -> Unit,
+    viewModel: AccountListViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
+    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
-    // Estado del flujo de actualización.
-    var checking by remember { mutableStateOf(false) }
-    var downloading by remember { mutableStateOf(false) }
-    var available by remember { mutableStateOf<UpdateManager.Release?>(null) }
-
-    fun checkForUpdates() {
-        if (checking || downloading) return
-        checking = true
-        scope.launch {
-            when (val result = UpdateManager.check()) {
-                is UpdateManager.CheckResult.UpdateAvailable -> available = result.release
-                is UpdateManager.CheckResult.UpToDate ->
-                    Toast.makeText(context, R.string.up_to_date, Toast.LENGTH_SHORT).show()
-                is UpdateManager.CheckResult.Error ->
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.update_error, result.message),
-                        Toast.LENGTH_LONG
-                    ).show()
+    // Escuchar eventos puntuales (Toasts).
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            val msg = when (event) {
+                is UpdateEvent.UpToDate -> context.getString(R.string.up_to_date)
+                is UpdateEvent.NoReleases -> context.getString(R.string.no_releases)
+                is UpdateEvent.PermissionRequested ->
+                    context.getString(R.string.install_permission_needed)
+                is UpdateEvent.Error ->
+                    context.getString(R.string.update_error, event.message)
             }
-            checking = false
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -89,7 +78,7 @@ fun AccountListScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.title_accounts)) },
                 actions = {
-                    if (checking) {
+                    if (updateState is UpdateUiState.Checking) {
                         CircularProgressIndicator(
                             modifier = Modifier
                                 .padding(end = 16.dp)
@@ -97,7 +86,7 @@ fun AccountListScreen(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        IconButton(onClick = { checkForUpdates() }) {
+                        IconButton(onClick = { viewModel.checkForUpdates() }) {
                             Icon(
                                 Icons.Filled.Refresh,
                                 contentDescription = stringResource(R.string.check_updates)
@@ -132,71 +121,48 @@ fun AccountListScreen(
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(accounts, key = { it.id }) { account ->
                     AccountCard(
                         account = account,
                         onClick = { onAccountClick(account.id) },
-                        onSend = { WhatsAppHelper.sendToWhatsApp(context, account) }
+                        onSend = { WhatsAppLauncher.send(context, account) }
                     )
                 }
             }
         }
     }
 
-    // Diálogo cuando hay una actualización disponible.
-    val release = available
-    if (release != null) {
+    val state = updateState
+    if (state is UpdateUiState.Available) {
         AlertDialog(
-            onDismissRequest = { if (!downloading) available = null },
+            onDismissRequest = { if (!state.downloading) viewModel.dismissUpdate() },
             title = { Text(stringResource(R.string.update_available_title)) },
             text = {
-                if (downloading) {
+                if (state.downloading) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp
                         )
-                        Text(
-                            text = "  " + stringResource(R.string.downloading_update)
-                        )
+                        Text("  " + stringResource(R.string.downloading_update))
                     }
                 } else {
-                    Text(stringResource(R.string.update_available_body, release.tag))
+                    Text(stringResource(R.string.update_available_body, state.release.tag))
                 }
             },
             confirmButton = {
                 TextButton(
-                    enabled = !downloading,
-                    onClick = {
-                        downloading = true
-                        scope.launch {
-                            try {
-                                val apk = UpdateManager.downloadApk(context, release)
-                                UpdateManager.installApk(context, apk)
-                            } catch (e: Exception) {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(
-                                        R.string.update_error,
-                                        e.message ?: ""
-                                    ),
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            } finally {
-                                downloading = false
-                                available = null
-                            }
-                        }
-                    }
+                    enabled = !state.downloading,
+                    onClick = { viewModel.downloadAndInstall() }
                 ) { Text(stringResource(R.string.update_now)) }
             },
             dismissButton = {
                 TextButton(
-                    enabled = !downloading,
-                    onClick = { available = null }
+                    enabled = !state.downloading,
+                    onClick = { viewModel.dismissUpdate() }
                 ) { Text(stringResource(R.string.later)) }
             }
         )

@@ -1,4 +1,4 @@
-package com.dloren.mispantallas.data
+package com.dloren.mispantallas.data.local
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -12,17 +12,17 @@ import kotlinx.coroutines.flow.Flow
 interface AccountDao {
 
     @Query("SELECT * FROM accounts ORDER BY (startDateMillis + durationDays * 86400000) ASC")
-    fun observeAll(): Flow<List<Account>>
+    fun observeAll(): Flow<List<AccountEntity>>
 
     @Query("SELECT * FROM accounts WHERE id = :id LIMIT 1")
-    suspend fun getById(id: Long): Account?
+    suspend fun getById(id: Long): AccountEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(account: Account): Long
+    suspend fun insert(entity: AccountEntity): Long
 
     @Update
-    suspend fun update(account: Account)
+    suspend fun update(entity: AccountEntity)
 
     @Delete
-    suspend fun delete(account: Account)
+    suspend fun delete(entity: AccountEntity)
 }

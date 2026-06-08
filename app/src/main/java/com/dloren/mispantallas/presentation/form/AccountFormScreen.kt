@@ -1,4 +1,4 @@
-package com.dloren.mispantallas.ui
+package com.dloren.mispantallas.presentation.form
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,8 +11,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -31,16 +31,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dloren.mispantallas.R
-import com.dloren.mispantallas.data.Account
-import com.dloren.mispantallas.util.WhatsAppHelper
+import com.dloren.mispantallas.domain.model.Account
+import com.dloren.mispantallas.presentation.AppViewModelProvider
+import com.dloren.mispantallas.presentation.whatsapp.WhatsAppLauncher
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -48,59 +50,30 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountFormScreen(
-    accountId: Long,
-    prefill: Account?,
-    viewModel: AccountViewModel,
     onDone: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: AccountFormViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val isEditing = accountId > 0L
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-
-    // Estado del formulario.
-    var loaded by rememberSaveable(accountId) { mutableStateOf(false) }
-    var email by rememberSaveable(accountId) { mutableStateOf(prefill?.email ?: "") }
-    var password by rememberSaveable(accountId) { mutableStateOf(prefill?.password ?: "") }
-    var profile by rememberSaveable(accountId) { mutableStateOf(prefill?.profileName ?: "") }
-    var pin by rememberSaveable(accountId) { mutableStateOf(prefill?.pin ?: "") }
-    var platform by rememberSaveable(accountId) { mutableStateOf(prefill?.platform ?: "") }
-    var clientPhone by rememberSaveable(accountId) { mutableStateOf(prefill?.clientPhone ?: "") }
-    var duration by rememberSaveable(accountId) {
-        mutableStateOf((prefill?.durationDays ?: 30).toString())
-    }
-    var startDate by rememberSaveable(accountId) {
-        mutableStateOf(prefill?.startDateMillis ?: System.currentTimeMillis())
-    }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Cargar la cuenta existente cuando se edita.
-    LaunchedEffect(accountId) {
-        if (isEditing && !loaded) {
-            viewModel.getAccount(accountId)?.let { acc ->
-                email = acc.email
-                password = acc.password
-                profile = acc.profileName
-                pin = acc.pin
-                platform = acc.platform
-                clientPhone = acc.clientPhone
-                duration = acc.durationDays.toString()
-                startDate = acc.startDateMillis
-            }
-            loaded = true
-        }
+    // Volver atrás cuando la operación terminó.
+    LaunchedEffect(state.finished) {
+        if (state.finished) onDone()
     }
 
-    fun buildAccount(): Account = Account(
-        id = if (isEditing) accountId else 0L,
-        email = email.trim(),
-        password = password.trim(),
-        profileName = profile.trim(),
-        pin = pin.trim(),
-        platform = platform.trim(),
-        clientPhone = clientPhone.trim(),
-        durationDays = duration.toIntOrNull()?.coerceAtLeast(0) ?: 30,
-        startDateMillis = startDate
+    fun currentAccount() = Account(
+        id = state.id,
+        email = state.email,
+        password = state.password,
+        profileName = state.profileName,
+        pin = state.pin,
+        platform = state.platform,
+        clientPhone = state.clientPhone,
+        durationDays = state.durationText.toIntOrNull() ?: 30,
+        startDateMillis = state.startDateMillis
     )
 
     Scaffold(
@@ -109,7 +82,7 @@ fun AccountFormScreen(
                 title = {
                     Text(
                         stringResource(
-                            if (isEditing) R.string.edit_account else R.string.new_account
+                            if (state.isEditing) R.string.edit_account else R.string.new_account
                         )
                     )
                 },
@@ -130,60 +103,60 @@ fun AccountFormScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
-                value = platform,
-                onValueChange = { platform = it },
+                value = state.platform,
+                onValueChange = viewModel::onPlatformChange,
                 label = { Text(stringResource(R.string.field_platform)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = state.email,
+                onValueChange = viewModel::onEmailChange,
                 label = { Text(stringResource(R.string.field_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = state.password,
+                onValueChange = viewModel::onPasswordChange,
                 label = { Text(stringResource(R.string.field_password)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = profile,
-                onValueChange = { profile = it },
+                value = state.profileName,
+                onValueChange = viewModel::onProfileChange,
                 label = { Text(stringResource(R.string.field_profile)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = pin,
-                onValueChange = { pin = it },
+                value = state.pin,
+                onValueChange = viewModel::onPinChange,
                 label = { Text(stringResource(R.string.field_pin)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = clientPhone,
-                onValueChange = { clientPhone = it },
+                value = state.clientPhone,
+                onValueChange = viewModel::onClientPhoneChange,
                 label = { Text(stringResource(R.string.field_client_phone)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = duration,
-                onValueChange = { new -> duration = new.filter { it.isDigit() } },
+                value = state.durationText,
+                onValueChange = viewModel::onDurationChange,
                 label = { Text(stringResource(R.string.field_duration)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = dateFormat.format(Date(startDate)),
+                value = dateFormat.format(Date(state.startDateMillis)),
                 onValueChange = {},
                 readOnly = true,
                 label = { Text(stringResource(R.string.field_start_date)) },
@@ -196,51 +169,44 @@ fun AccountFormScreen(
             )
 
             Button(
-                onClick = { viewModel.save(buildAccount()) { onDone() } },
+                onClick = viewModel::save,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.save))
             }
 
             OutlinedButton(
-                onClick = { WhatsAppHelper.sendToWhatsApp(context, buildAccount()) },
+                onClick = { WhatsAppLauncher.send(context, currentAccount()) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-                Text(
-                    text = "  " + stringResource(R.string.send_whatsapp)
-                )
+                Text("  " + stringResource(R.string.send_whatsapp))
             }
 
-            if (isEditing) {
+            if (state.isEditing) {
                 OutlinedButton(
-                    onClick = {
-                        viewModel.delete(buildAccount())
-                        onDone()
-                    },
+                    onClick = viewModel::delete,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Filled.Delete, contentDescription = null)
-                    Text(text = "  " + stringResource(R.string.delete))
+                    Text("  " + stringResource(R.string.delete))
                 }
             }
         }
     }
 
     if (showDatePicker) {
-        val pickerState = rememberDatePickerState(initialSelectedDateMillis = startDate)
+        val pickerState = rememberDatePickerState(initialSelectedDateMillis = state.startDateMillis)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    pickerState.selectedDateMillis?.let { startDate = it }
+                    pickerState.selectedDateMillis?.let { viewModel.onStartDateChange(it) }
                     showDatePicker = false
                 }) { Text(stringResource(R.string.save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
             }
         ) {
             DatePicker(state = pickerState)

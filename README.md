@@ -16,22 +16,45 @@ plataformas de streaming en alquiler (Netflix, Disney+, etc.).
   hacia *Mis Pantallas* y la app intenta detectar los datos automáticamente y
   prellenar el formulario para guardarlos.
 
-## Arquitectura
+## Arquitectura (limpia, por capas)
 
-- **UI**: Jetpack Compose + Material 3, navegación con Navigation Compose.
-- **Estado**: `AccountViewModel` (AndroidViewModel) expone un `StateFlow` con la
-  lista de cuentas.
-- **Persistencia**: Room (`Account`, `AccountDao`, `AppDatabase`,
-  `AccountRepository`).
-- **WhatsApp**: `util/WhatsAppHelper` arma y parsea el mensaje de texto.
+La app sigue una arquitectura por capas con separación clara de responsabilidades
+e inyección de dependencias **manual** (sin librerías de DI, para mantenerla liviana):
+
+- **presentation**: Jetpack Compose + Material 3, `ViewModel`s con `UiState`
+  (flujo de datos unidireccional), navegación con Navigation Compose y tema.
+- **domain**: modelos puros, interfaces de repositorio y **casos de uso**. No
+  depende de Android ni de Room (es Kotlin puro y testeable).
+- **data**: Room (local), fuente remota de GitHub, implementaciones de los
+  repositorios e infraestructura de Android (instalador de APK).
 
 ```
 app/src/main/java/com/dloren/mispantallas/
-├── MainActivity.kt          # Navegación + manejo del intent de "Compartir"
-├── data/                    # Room: entidad, DAO, base de datos, repositorio
-├── ui/                      # Pantallas Compose + ViewModel + tema
-└── util/WhatsAppHelper.kt   # Envío y parseo de mensajes de WhatsApp
+├── MainActivity.kt              # Host de navegación + intent "Compartir"
+├── MisPantallasApp.kt           # Application: crea el contenedor de DI
+├── di/AppContainer.kt           # Inyección de dependencias manual
+├── domain/                      # Kotlin puro (sin Android)
+│   ├── model/                   # Account, AppRelease, UpdateResult
+│   ├── repository/              # Interfaces (contratos)
+│   ├── usecase/                 # Casos de uso (reglas de aplicación)
+│   └── util/VersionProvider
+├── data/                        # Implementaciones e infraestructura
+│   ├── local/                   # Room: Entity, Dao, Database
+│   ├── mapper/                  # Entity <-> modelo de dominio
+│   ├── remote/                  # API de GitHub (releases)
+│   ├── repository/              # Implementaciones de los repositorios
+│   ├── installer/               # Descarga e instalación del APK
+│   └── util/                    # VersionProvider basado en BuildConfig
+└── presentation/                # UI (Compose)
+    ├── list/                    # Pantalla de lista + ViewModel + UiState
+    ├── form/                    # Pantalla de formulario + ViewModel + UiState
+    ├── navigation/              # NavHost y rutas
+    ├── whatsapp/                # Envío por WhatsApp (intents)
+    └── theme/                   # Tema Material 3
 ```
+
+> El flujo de dependencias va siempre hacia el dominio: `presentation -> domain`
+> y `data -> domain`. El dominio no conoce a las otras capas.
 
 ## Cómo compilar
 
