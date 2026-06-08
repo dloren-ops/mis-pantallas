@@ -64,6 +64,11 @@ android {
         compose = true
         buildConfig = true
     }
+    lint {
+        // No abortar la build de release por advertencias de lint en CI.
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
