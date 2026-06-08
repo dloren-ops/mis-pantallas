@@ -11,7 +11,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface AccountDao {
 
-    @Query("SELECT * FROM accounts ORDER BY (startDateMillis + durationDays * 86400000) ASC")
+    @Query(
+        "SELECT * FROM accounts ORDER BY " +
+            "CASE WHEN status = 'SOLD' THEN 1 ELSE 0 END ASC, " +
+            "(soldDateMillis + durationDays * 86400000) ASC"
+    )
     fun observeAll(): Flow<List<AccountEntity>>
 
     @Query("SELECT * FROM accounts WHERE id = :id LIMIT 1")

@@ -40,8 +40,15 @@ object WhatsAppLauncher {
         if (account.profileName.isNotBlank()) sb.appendLine("$L_PROFILE: ${account.profileName}")
         if (account.pin.isNotBlank()) sb.appendLine("$L_PIN: ${account.pin}")
         sb.appendLine("$L_DURATION: ${account.durationDays}")
+        // Si ya está vendida usamos su fecha de fin; si no, se asume que empieza hoy.
+        val end = if (account.isSold) {
+            account.clientEndDateMillis
+        } else {
+            System.currentTimeMillis() +
+                java.util.concurrent.TimeUnit.DAYS.toMillis(account.durationDays.toLong())
+        }
         sb.appendLine("$L_START: ${dateFormat.format(Date(account.startDateMillis))}")
-        sb.appendLine("$L_END: ${dateFormat.format(Date(account.endDateMillis))}")
+        sb.appendLine("$L_END: ${dateFormat.format(Date(end))}")
         return sb.toString().trim()
     }
 

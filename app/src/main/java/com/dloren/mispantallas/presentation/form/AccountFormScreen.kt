@@ -1,11 +1,16 @@
 package com.dloren.mispantallas.presentation.form
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -18,13 +23,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -35,17 +44,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dloren.mispantallas.R
 import com.dloren.mispantallas.domain.model.Account
-import com.dloren.mispantallas.presentation.AppViewModelProvider
+import com.dloren.mispantallas.domain.model.AccountStatus
+import com.dloren.mispantallas.presentation.platform.Platforms
 import com.dloren.mispantallas.presentation.whatsapp.WhatsAppLauncher
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -56,15 +69,15 @@ import java.util.Locale
 fun AccountFormScreen(
     onDone: () -> Unit,
     onBack: () -> Unit,
-    viewModel: AccountFormViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: AccountFormViewModel = viewModel(factory = com.dloren.mispantallas.presentation.AppViewModelProvider.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var pasteText by remember { mutableStateOf("") }
+    var platformExpanded by remember { mutableStateOf(false) }
 
-    // Volver atrás cuando la operación terminó.
     LaunchedEffect(state.finished) {
         if (state.finished) onDone()
     }
@@ -78,7 +91,9 @@ fun AccountFormScreen(
         platform = state.platform,
         clientPhone = state.clientPhone,
         durationDays = state.durationText.toIntOrNull() ?: 30,
-        startDateMillis = state.startDateMillis
+        startDateMillis = state.startDateMillis,
+        status = state.status,
+        soldDateMillis = state.soldDateMillis
     )
 
     Scaffold(
@@ -107,7 +122,7 @@ fun AccountFormScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Pegado inteligente: pegar todo junto y autocompletar.
+            // Pegado inteligente.
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -152,13 +167,43 @@ fun AccountFormScreen(
                 }
             }
 
-            OutlinedTextField(
-                value = state.platform,
-                onValueChange = viewModel::onPlatformChange,
-                label = { Text(stringResource(R.string.field_platform)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Selector de plataforma con colores.
+            ExposedDropdownMenuBox(
+                expanded = platformExpanded,
+                onExpandedChange = { platformExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = state.platform,
+                    onValueChange = viewModel::onPlatformChange,
+                    label = { Text(stringResource(R.string.field_platform)) },
+                    singleLine = true,
+                    leadingIcon = if (state.platform.isNotBlank()) {
+                        { ColorDot(Platforms.colorFor(state.platform)) }
+                    } else null,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = platformExpanded)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = platformExpanded,
+                    onDismissRequest = { platformExpanded = false }
+                ) {
+                    Platforms.all.forEach { p ->
+                        DropdownMenuItem(
+                            text = { Text(p.name) },
+                            leadingIcon = { ColorDot(p.color) },
+                            onClick = {
+                                viewModel.onPlatformChange(p.name)
+                                platformExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = state.email,
                 onValueChange = viewModel::onEmailChange,
@@ -205,17 +250,20 @@ fun AccountFormScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
-            OutlinedTextField(
-                value = dateFormat.format(Date(state.startDateMillis)),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(stringResource(R.string.field_start_date)) },
-                trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(Icons.Filled.DateRange, contentDescription = null)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+
+            // Estado de venta.
+            StatusSection(
+                status = state.status,
+                onMarkSold = viewModel::markSoldNow
+            )
+
+            // Renovación propia (proveedor).
+            SelfRenewSection(
+                enabled = state.selfRenewEnabled,
+                everyText = state.renewEveryText,
+                onToggle = viewModel::onSelfRenewToggle,
+                onEveryChange = viewModel::onRenewEveryChange,
+                onRenewedToday = viewModel::onRenewedToday
             )
 
             Button(
@@ -256,10 +304,103 @@ fun AccountFormScreen(
                 }) { Text(stringResource(R.string.save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
             }
         ) {
             DatePicker(state = pickerState)
+        }
+    }
+}
+
+@Composable
+private fun ColorDot(color: Color) {
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(color)
+    )
+}
+
+@Composable
+private fun StatusSection(status: AccountStatus, onMarkSold: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(
+                        if (status == AccountStatus.SOLD) R.string.status_sold
+                        else R.string.status_not_sold
+                    ),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (status == AccountStatus.SOLD) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+            if (status == AccountStatus.NOT_SOLD) {
+                Text(
+                    text = stringResource(R.string.not_sold_hint),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedButton(onClick = onMarkSold, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.mark_sold))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelfRenewSection(
+    enabled: Boolean,
+    everyText: String,
+    onToggle: (Boolean) -> Unit,
+    onEveryChange: (String) -> Unit,
+    onRenewedToday: () -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.self_renew_title),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = stringResource(R.string.self_renew_desc),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Switch(checked = enabled, onCheckedChange = onToggle)
+            }
+            if (enabled) {
+                OutlinedTextField(
+                    value = everyText,
+                    onValueChange = onEveryChange,
+                    label = { Text(stringResource(R.string.field_renew_every)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedButton(onClick = onRenewedToday, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.renewed_today))
+                }
+            }
         }
     }
 }

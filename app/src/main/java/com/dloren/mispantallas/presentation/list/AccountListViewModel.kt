@@ -7,6 +7,7 @@ import com.dloren.mispantallas.domain.model.Account
 import com.dloren.mispantallas.domain.model.AppRelease
 import com.dloren.mispantallas.domain.model.UpdateResult
 import com.dloren.mispantallas.domain.usecase.CheckForUpdateUseCase
+import com.dloren.mispantallas.domain.usecase.MarkAsSoldUseCase
 import com.dloren.mispantallas.domain.usecase.ObserveAccountsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -36,6 +37,7 @@ sealed interface UpdateEvent {
 class AccountListViewModel(
     observeAccounts: ObserveAccountsUseCase,
     private val checkForUpdate: CheckForUpdateUseCase,
+    private val markAsSold: MarkAsSoldUseCase,
     private val apkInstaller: ApkInstaller
 ) : ViewModel() {
 
@@ -94,5 +96,10 @@ class AccountListViewModel(
 
     fun dismissUpdate() {
         _updateState.value = UpdateUiState.Idle
+    }
+
+    /** Al enviar por WhatsApp desde la app, si no estaba vendida la marca vendida. */
+    fun markSoldIfNeeded(account: Account) {
+        viewModelScope.launch { markAsSold(account) }
     }
 }

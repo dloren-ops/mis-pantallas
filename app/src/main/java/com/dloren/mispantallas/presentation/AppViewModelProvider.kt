@@ -21,6 +21,7 @@ object AppViewModelProvider {
             AccountListViewModel(
                 observeAccounts = container.observeAccounts,
                 checkForUpdate = container.checkForUpdate,
+                markAsSold = container.markAsSold,
                 apkInstaller = container.apkInstaller
             )
         }

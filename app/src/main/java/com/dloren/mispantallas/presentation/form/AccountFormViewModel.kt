@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dloren.mispantallas.domain.model.Account
+import com.dloren.mispantallas.domain.model.AccountStatus
 import com.dloren.mispantallas.domain.usecase.DeleteAccountUseCase
 import com.dloren.mispantallas.domain.usecase.GetAccountUseCase
 import com.dloren.mispantallas.domain.usecase.ParseSharedAccountUseCase
@@ -32,10 +33,11 @@ class AccountFormViewModel(
         val isEditing = accountId > 0L
         if (isEditing) {
             viewModelScope.launch {
-                getAccount(accountId)?.let { acc -> _uiState.value = acc.toFormState(isEditing = true) }
+                getAccount(accountId)?.let { acc ->
+                    _uiState.value = acc.toFormState(isEditing = true)
+                }
             }
         } else {
-            // Si llegó un borrador por "Compartir", prellenar.
             consumeSharedDraft()?.let { draft ->
                 _uiState.value = draft.toFormState(isEditing = false)
             }
@@ -53,10 +55,22 @@ class AccountFormViewModel(
 
     fun onStartDateChange(millis: Long) = _uiState.update { it.copy(startDateMillis = millis) }
 
+    fun onSelfRenewToggle(enabled: Boolean) = _uiState.update { it.copy(selfRenewEnabled = enabled) }
+    fun onRenewEveryChange(v: String) =
+        _uiState.update { it.copy(renewEveryText = v.filter { c -> c.isDigit() }) }
+
+    /** Reinicia el ciclo de renovación propia (vos compraste/renovaste hoy). */
+    fun onRenewedToday() =
+        _uiState.update { it.copy(providerStartMillis = System.currentTimeMillis()) }
+
+    /** Marca la cuenta como vendida desde el formulario (arranca el conteo al guardar). */
+    fun markSoldNow() = _uiState.update {
+        it.copy(status = AccountStatus.SOLD, soldDateMillis = System.currentTimeMillis())
+    }
+
     /**
      * Aplica un texto pegado "a granel": detecta cada dato y completa los campos
      * correspondientes (sin pisar los que ya tengan valor si el texto no los trae).
-     * @return true si detectó al menos un dato.
      */
     fun applyPastedData(text: String): Boolean {
         val parsed = parseSharedAccount(text) ?: return false
@@ -103,7 +117,12 @@ class AccountFormViewModel(
         platform = platform,
         clientPhone = clientPhone,
         durationText = durationDays.toString(),
-        startDateMillis = startDateMillis
+        startDateMillis = startDateMillis,
+        status = status,
+        soldDateMillis = soldDateMillis,
+        selfRenewEnabled = renewEveryDays > 0,
+        renewEveryText = if (renewEveryDays > 0) renewEveryDays.toString() else "15",
+        providerStartMillis = providerStartMillis
     )
 
     private fun AccountFormUiState.toAccount() = Account(
@@ -115,6 +134,10 @@ class AccountFormViewModel(
         platform = platform,
         clientPhone = clientPhone,
         durationDays = durationText.toIntOrNull() ?: 30,
-        startDateMillis = startDateMillis
+        startDateMillis = startDateMillis,
+        status = status,
+        soldDateMillis = soldDateMillis,
+        renewEveryDays = if (selfRenewEnabled) (renewEveryText.toIntOrNull() ?: 0) else 0,
+        providerStartMillis = providerStartMillis
     )
 }

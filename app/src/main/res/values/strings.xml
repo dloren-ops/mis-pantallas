@@ -55,6 +55,23 @@
     <string name="reminder_title">Vence mañana</string>
     <string name="reminder_text">%1$s vence mañana. Tocá para recordarle al cliente que renueve.</string>
     <string name="renewal_whatsapp_message">¡Hola! Te recordamos que tu cuenta%1$s vence mañana. ¿Querés renovarla?</string>
+    <string name="provider_reminder_title">Renovación pendiente</string>
+    <string name="provider_reminder_text">Mañana se vence %1$s. ¡Acordate de renovarla!</string>
+
+    <!-- Estado de venta -->
+    <string name="status_sold">Vendida</string>
+    <string name="status_not_sold">No vendida</string>
+    <string name="mark_sold">Marcar como vendida</string>
+    <string name="not_sold_hint">Se marca como vendida al enviarla por WhatsApp.</string>
+    <string name="renew_provider_in">Renovar con proveedor en %1$d días</string>
+    <string name="renew_provider_due">¡Renová con el proveedor!</string>
+
+    <!-- Renovación propia -->
+    <string name="self_renew_title">Renovación propia (proveedor)</string>
+    <string name="self_renew_desc">Activalo si vos comprás esta cuenta y debés renovarla cada cierto tiempo.</string>
+    <string name="self_renew_enable">Avisarme para renovar</string>
+    <string name="field_renew_every">Renovar cada (días)</string>
+    <string name="renewed_today">Renové hoy</string>
 
     <!-- Pegado inteligente -->
     <string name="paste_data">Pegar datos</string>

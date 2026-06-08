@@ -15,5 +15,10 @@ data class AccountEntity(
     val platform: String = "",
     val clientPhone: String = "",
     val durationDays: Int = 30,
-    val startDateMillis: Long = 0L
+    val startDateMillis: Long = 0L,
+    /** "NOT_SOLD" o "SOLD". */
+    val status: String = "NOT_SOLD",
+    val soldDateMillis: Long = 0L,
+    val renewEveryDays: Int = 0,
+    val providerStartMillis: Long = 0L
 )
