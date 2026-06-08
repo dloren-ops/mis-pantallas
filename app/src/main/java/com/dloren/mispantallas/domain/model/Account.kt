@@ -43,11 +43,9 @@ data class Account(
     val clientEndDateMillis: Long
         get() = soldDateMillis + TimeUnit.DAYS.toMillis(durationDays.toLong())
 
-    /** Días restantes para el cliente (redondeo hacia arriba). Solo si está vendida. */
-    fun remainingClientDays(now: Long = System.currentTimeMillis()): Long {
-        val diff = clientEndDateMillis - now
-        return Math.ceil(diff.toDouble() / dayMillis).toLong()
-    }
+    /** Días restantes para el cliente, contados por **día de calendario**. Solo si está vendida. */
+    fun remainingClientDays(now: Long = System.currentTimeMillis()): Long =
+        calendarDaysBetween(now, clientEndDateMillis)
 
     fun isClientExpired(now: Long = System.currentTimeMillis()): Boolean =
         isSold && now >= clientEndDateMillis
@@ -60,8 +58,28 @@ data class Account(
     val providerRenewMillis: Long
         get() = providerStartMillis + TimeUnit.DAYS.toMillis(renewEveryDays.toLong())
 
-    fun remainingProviderDays(now: Long = System.currentTimeMillis()): Long {
-        val diff = providerRenewMillis - now
-        return Math.ceil(diff.toDouble() / dayMillis).toLong()
+    fun remainingProviderDays(now: Long = System.currentTimeMillis()): Long =
+        calendarDaysBetween(now, providerRenewMillis)
+
+    private companion object {
+        /**
+         * Diferencia en días de calendario entre [from] y [to] (de medianoche a
+         * medianoche, zona horaria local). Ej.: vendida ayer con 30 días -> hoy 29;
+         * vendida hoy -> 30.
+         */
+        fun calendarDaysBetween(from: Long, to: Long): Long {
+            val dayMs = TimeUnit.DAYS.toMillis(1)
+            return Math.round((startOfDay(to) - startOfDay(from)).toDouble() / dayMs)
+        }
+
+        fun startOfDay(millis: Long): Long {
+            val cal = java.util.Calendar.getInstance()
+            cal.timeInMillis = millis
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            cal.set(java.util.Calendar.MINUTE, 0)
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.MILLISECOND, 0)
+            return cal.timeInMillis
+        }
     }
 }
