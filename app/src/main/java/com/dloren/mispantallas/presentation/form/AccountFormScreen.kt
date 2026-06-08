@@ -260,7 +260,8 @@ fun AccountFormScreen(
             // Estado de venta.
             StatusSection(
                 status = state.status,
-                onMarkSold = viewModel::markSoldNow
+                onMarkSold = viewModel::markSoldNow,
+                onMarkNotSold = viewModel::markNotSoldNow
             )
 
             // Renovación propia (proveedor).
@@ -331,7 +332,7 @@ private fun ColorDot(color: Color) {
 }
 
 @Composable
-private fun StatusSection(status: AccountStatus, onMarkSold: () -> Unit) {
+private fun StatusSection(status: AccountStatus, onMarkSold: () -> Unit, onMarkNotSold: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
@@ -360,6 +361,10 @@ private fun StatusSection(status: AccountStatus, onMarkSold: () -> Unit) {
                 )
                 OutlinedButton(onClick = onMarkSold, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.mark_sold))
+                }
+            } else {
+                OutlinedButton(onClick = onMarkNotSold, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.move_to_not_sold))
                 }
             }
         }

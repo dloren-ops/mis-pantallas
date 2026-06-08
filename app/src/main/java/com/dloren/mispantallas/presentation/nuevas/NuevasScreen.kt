@@ -73,6 +73,7 @@ fun NuevasScreen(
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showGenerateProfiles by remember { mutableStateOf(false) }
+    var sellTarget by remember { mutableStateOf<Account?>(null) }
 
     Scaffold(
         topBar = {
@@ -137,10 +138,7 @@ fun NuevasScreen(
                     NuevaCard(
                         account = account,
                         onClick = { onAccountClick(account.id) },
-                        onSend = {
-                            WhatsAppLauncher.send(context, account)
-                            viewModel.markSold(account)
-                        }
+                        onSend = { sellTarget = account }
                     )
                 }
             }
@@ -153,6 +151,20 @@ fun NuevasScreen(
             onGenerate = { email, password, platform, duration, count ->
                 viewModel.generateNamedProfiles(email, password, platform, duration, count)
                 showGenerateProfiles = false
+            }
+        )
+    }
+
+    val target = sellTarget
+    if (target != null) {
+        SellPhoneDialog(
+            initialPhone = target.clientPhone,
+            onDismiss = { sellTarget = null },
+            onConfirm = { phone ->
+                val updated = target.copy(clientPhone = phone.trim())
+                WhatsAppLauncher.send(context, updated)
+                viewModel.markSold(updated)
+                sellTarget = null
             }
         )
     }
@@ -344,6 +356,46 @@ private fun GenerateProfilesDialog(
                     onGenerate(email, password, platform, duration.toIntOrNull() ?: 30, count)
                 }
             ) { Text(stringResource(R.string.generate)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SellPhoneDialog(
+    initialPhone: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var phone by remember { mutableStateOf(initialPhone) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.sell_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.sell_dialog_desc),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text(stringResource(R.string.field_client_phone)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(phone) }) {
+                Text(stringResource(R.string.send_whatsapp))
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }

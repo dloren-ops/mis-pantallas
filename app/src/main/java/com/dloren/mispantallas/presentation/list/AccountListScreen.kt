@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Refresh
@@ -156,7 +157,8 @@ fun AccountListScreen(
                         onSend = {
                             WhatsAppLauncher.send(context, account)
                             viewModel.markSoldIfNeeded(account)
-                        }
+                        },
+                        onMoveToNotSold = { viewModel.markNotSold(account) }
                     )
                 }
             }
@@ -202,7 +204,8 @@ fun AccountListScreen(
 private fun AccountCard(
     account: Account,
     onClick: () -> Unit,
-    onSend: () -> Unit
+    onSend: () -> Unit,
+    onMoveToNotSold: () -> Unit
 ) {
     val platformColor = Platforms.colorFor(account.platform)
     val title = account.platform.ifBlank { account.email.ifBlank { "Cuenta" } }
@@ -263,6 +266,13 @@ private fun AccountCard(
                         )
                     }
                 }
+            }
+            IconButton(onClick = onMoveToNotSold) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Undo,
+                    contentDescription = stringResource(R.string.move_to_not_sold),
+                    tint = MaterialTheme.colorScheme.outline
+                )
             }
             IconButton(onClick = onSend) {
                 Icon(

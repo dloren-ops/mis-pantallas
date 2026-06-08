@@ -7,6 +7,7 @@ import com.dloren.mispantallas.domain.model.Account
 import com.dloren.mispantallas.domain.model.AppRelease
 import com.dloren.mispantallas.domain.model.UpdateResult
 import com.dloren.mispantallas.domain.usecase.CheckForUpdateUseCase
+import com.dloren.mispantallas.domain.usecase.MarkAsNotSoldUseCase
 import com.dloren.mispantallas.domain.usecase.MarkAsSoldUseCase
 import com.dloren.mispantallas.domain.usecase.ObserveAccountsUseCase
 import kotlinx.coroutines.channels.Channel
@@ -39,6 +40,7 @@ class AccountListViewModel(
     observeAccounts: ObserveAccountsUseCase,
     private val checkForUpdate: CheckForUpdateUseCase,
     private val markAsSold: MarkAsSoldUseCase,
+    private val markAsNotSold: MarkAsNotSoldUseCase,
     private val apkInstaller: ApkInstaller
 ) : ViewModel() {
 
@@ -104,5 +106,10 @@ class AccountListViewModel(
     /** Al enviar por WhatsApp desde la app, si no estaba vendida la marca vendida. */
     fun markSoldIfNeeded(account: Account) {
         viewModelScope.launch { markAsSold(account) }
+    }
+
+    /** Devuelve una cuenta vendida a "no vendida" (vuelve a Nuevas). */
+    fun markNotSold(account: Account) {
+        viewModelScope.launch { markAsNotSold(account) }
     }
 }

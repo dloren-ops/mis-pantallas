@@ -16,6 +16,7 @@ import com.dloren.mispantallas.domain.repository.UpdateRepository
 import com.dloren.mispantallas.domain.usecase.CheckForUpdateUseCase
 import com.dloren.mispantallas.domain.usecase.DeleteAccountUseCase
 import com.dloren.mispantallas.domain.usecase.GetAccountUseCase
+import com.dloren.mispantallas.domain.usecase.MarkAsNotSoldUseCase
 import com.dloren.mispantallas.domain.usecase.MarkAsSoldUseCase
 import com.dloren.mispantallas.domain.usecase.ObserveAccountsUseCase
 import com.dloren.mispantallas.domain.usecase.ParseSharedAccountUseCase
@@ -55,6 +56,7 @@ class AppContainer(context: Context) {
     val saveAccount = SaveAccountUseCase(accountRepository, reminderScheduler)
     val deleteAccount = DeleteAccountUseCase(accountRepository, reminderScheduler)
     val markAsSold = MarkAsSoldUseCase(accountRepository, reminderScheduler)
+    val markAsNotSold = MarkAsNotSoldUseCase(accountRepository, reminderScheduler)
     val parseSharedAccount = ParseSharedAccountUseCase()
     val checkForUpdate = CheckForUpdateUseCase(updateRepository, versionProvider)
 

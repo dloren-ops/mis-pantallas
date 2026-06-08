@@ -94,6 +94,9 @@
     <string name="generate_profiles_title">Generar perfiles con nombres</string>
     <string name="generate_profiles_desc">Cargá correo, contraseña y plataforma. Se crean los perfiles (Mura, Bura, Dayira…) con su PIN (9876, 8876, 7876…), según cuántos elijas. Van a Nuevas.</string>
     <string name="how_many_profiles">¿Cuántos perfiles?</string>
+    <string name="move_to_not_sold">Pasar a no vendida</string>
+    <string name="sell_dialog_title">Enviar al cliente</string>
+    <string name="sell_dialog_desc">Escribí el número de WhatsApp del cliente (con código de país). Queda guardado y la cuenta pasa a vendida.</string>
 
     <!-- Pegado inteligente -->
     <string name="paste_data">Pegar datos</string>
