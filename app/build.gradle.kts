@@ -13,22 +13,44 @@ android {
         applicationId = "com.dloren.mispantallas"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
+        // versionCode se puede sobrescribir desde CI con -PversionCode=<n>
+        // (usamos el numero de ejecucion de GitHub Actions para que siempre suba).
+        versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Datos del repositorio para el buscador de actualizaciones.
+        buildConfigField("String", "GITHUB_OWNER", "\"dloren-ops\"")
+        buildConfigField("String", "GITHUB_REPO", "\"mis-pantallas\"")
+    }
+
+    signingConfigs {
+        create("release") {
+            // Keystore versionado en el repo para que todas las builds (locales y
+            // de CI) tengan la MISMA firma y las actualizaciones se instalen encima.
+            storeFile = file("keystore/mispantallas.jks")
+            storePassword = "mispantallas"
+            keyAlias = "mispantallas"
+            keyPassword = "mispantallas"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            // Misma firma que release para poder actualizar entre ambas.
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -40,6 +62,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
