@@ -9,12 +9,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.dloren.mispantallas.presentation.form.AccountFormScreen
 import com.dloren.mispantallas.presentation.list.AccountListScreen
+import com.dloren.mispantallas.presentation.renewals.RenewalsScreen
 
 /** Rutas de navegación de la app. */
 object Routes {
     const val LIST = "list"
     const val FORM = "form"
     const val FORM_NEW = "form/new"
+    const val RENEWALS = "renewals"
     const val ARG_ACCOUNT_ID = "accountId"
 }
 
@@ -25,6 +27,14 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable(Routes.LIST) {
             AccountListScreen(
                 onAddAccount = { navController.navigate(Routes.FORM_NEW) },
+                onAccountClick = { id -> navController.navigate("${Routes.FORM}/$id") },
+                onOpenRenewals = { navController.navigate(Routes.RENEWALS) }
+            )
+        }
+
+        composable(Routes.RENEWALS) {
+            RenewalsScreen(
+                onBack = { navController.popBackStack() },
                 onAccountClick = { id -> navController.navigate("${Routes.FORM}/$id") }
             )
         }

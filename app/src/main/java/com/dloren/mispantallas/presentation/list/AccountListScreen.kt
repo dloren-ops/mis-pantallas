@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -57,6 +58,7 @@ import androidx.compose.runtime.LaunchedEffect
 fun AccountListScreen(
     onAddAccount: () -> Unit,
     onAccountClick: (Long) -> Unit,
+    onOpenRenewals: () -> Unit,
     viewModel: AccountListViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
@@ -83,6 +85,12 @@ fun AccountListScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.title_accounts)) },
                 actions = {
+                    IconButton(onClick = onOpenRenewals) {
+                        Icon(
+                            Icons.Filled.Autorenew,
+                            contentDescription = stringResource(R.string.open_renewals)
+                        )
+                    }
                     if (updateState is UpdateUiState.Checking) {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -237,7 +245,6 @@ private fun AccountCard(
                 }
                 StatusBadge(account)
                 CountdownLabel(account)
-                ProviderRenewLabel(account)
             }
             IconButton(onClick = onSend) {
                 Icon(
@@ -285,22 +292,5 @@ private fun CountdownLabel(account: Account) {
         fontWeight = FontWeight.SemiBold,
         color = color,
         modifier = Modifier.padding(top = 4.dp)
-    )
-}
-
-@Composable
-private fun ProviderRenewLabel(account: Account) {
-    if (!account.hasProviderRenewal) return
-    val remaining = account.remainingProviderDays()
-    val (text, color) = if (remaining <= 0L) {
-        stringResource(R.string.renew_provider_due) to Color(0xFFB3261E)
-    } else {
-        stringResource(R.string.renew_provider_in, remaining) to MaterialTheme.colorScheme.tertiary
-    }
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = color,
-        modifier = Modifier.padding(top = 2.dp)
     )
 }

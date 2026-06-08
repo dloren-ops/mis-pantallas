@@ -73,6 +73,14 @@
     <string name="field_renew_every">Renovar cada (días)</string>
     <string name="renewed_today">Renové hoy</string>
 
+    <!-- Pantalla de renovaciones -->
+    <string name="renewals_title">Mis renovaciones</string>
+    <string name="open_renewals">Renovaciones</string>
+    <string name="no_renewals">No tenés cuentas con renovación propia.\nActivá \"Renovación propia\" al editar una cuenta.</string>
+    <string name="renew_in_days">Renovar en %1$d días</string>
+    <string name="renew_due_today">¡Renová hoy mismo!</string>
+    <string name="renew_overdue">Renovación vencida hace %1$d días</string>
+
     <!-- Pegado inteligente -->
     <string name="paste_data">Pegar datos</string>
     <string name="paste_hint">Pegá todos los datos juntos (correo, contraseña, PIN, plataforma, etc.) en cualquier orden.</string>

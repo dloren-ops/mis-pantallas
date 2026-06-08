@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dloren.mispantallas.MisPantallasApp
 import com.dloren.mispantallas.presentation.form.AccountFormViewModel
 import com.dloren.mispantallas.presentation.list.AccountListViewModel
+import com.dloren.mispantallas.presentation.renewals.RenewalsViewModel
 
 /**
  * Fábrica central de ViewModels. Obtiene el contenedor de dependencias desde la
@@ -34,6 +35,13 @@ object AppViewModelProvider {
                 deleteAccount = container.deleteAccount,
                 parseSharedAccount = container.parseSharedAccount,
                 consumeSharedDraft = container::consumeSharedDraft
+            )
+        }
+        initializer {
+            val container = misPantallasApp().container
+            RenewalsViewModel(
+                observeAccounts = container.observeAccounts,
+                saveAccount = container.saveAccount
             )
         }
     }
