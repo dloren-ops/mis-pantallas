@@ -1,11 +1,13 @@
 package com.dloren.mispantallas
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,10 +24,14 @@ class MainActivity : ComponentActivity() {
     // Señal de que llegó un "Compartir" pendiente de abrir en el formulario.
     private var shareTrigger by mutableStateOf(0)
 
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* sin acción */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        requestNotificationPermissionIfNeeded()
         handleShareIntent(intent)
 
         setContent {
@@ -59,6 +65,18 @@ class MainActivity : ComponentActivity() {
                 container.setSharedDraft(parsed)
                 shareTrigger++
                 Toast.makeText(this, R.string.imported_from_share, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    /** Pide el permiso de notificaciones en Android 13+ si aún no se concedió. */
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = android.Manifest.permission.POST_NOTIFICATIONS
+            val granted = checkSelfPermission(permission) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                requestNotificationPermission.launch(permission)
             }
         }
     }

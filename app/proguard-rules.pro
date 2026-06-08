@@ -9,6 +9,11 @@
 # Entidades de Room: la librería accede a estos campos por su código generado.
 -keep class com.dloren.mispantallas.data.local.** { *; }
 
+# Workers de WorkManager (instanciados por reflexión).
+-keep class * extends androidx.work.ListenableWorker {
+    <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
 # Modelos de dominio (incluye los que se construyen al parsear JSON de GitHub).
 -keep class com.dloren.mispantallas.domain.model.** { *; }
 

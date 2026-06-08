@@ -5,10 +5,12 @@ import com.dloren.mispantallas.BuildConfig
 import com.dloren.mispantallas.data.installer.ApkInstaller
 import com.dloren.mispantallas.data.local.AppDatabase
 import com.dloren.mispantallas.data.remote.GithubReleaseDataSource
+import com.dloren.mispantallas.data.reminder.WorkManagerReminderScheduler
 import com.dloren.mispantallas.data.repository.AccountRepositoryImpl
 import com.dloren.mispantallas.data.repository.UpdateRepositoryImpl
 import com.dloren.mispantallas.data.util.BuildConfigVersionProvider
 import com.dloren.mispantallas.domain.model.Account
+import com.dloren.mispantallas.domain.reminder.ReminderScheduler
 import com.dloren.mispantallas.domain.repository.AccountRepository
 import com.dloren.mispantallas.domain.repository.UpdateRepository
 import com.dloren.mispantallas.domain.usecase.CheckForUpdateUseCase
@@ -41,14 +43,16 @@ class AppContainer(context: Context) {
 
     private val versionProvider: VersionProvider = BuildConfigVersionProvider()
 
+    private val reminderScheduler: ReminderScheduler = WorkManagerReminderScheduler(appContext)
+
     /** Infraestructura Android para actualizar la app. */
     val apkInstaller: ApkInstaller = ApkInstaller(appContext)
 
     // --- Domain (casos de uso) ---
     val observeAccounts = ObserveAccountsUseCase(accountRepository)
     val getAccount = GetAccountUseCase(accountRepository)
-    val saveAccount = SaveAccountUseCase(accountRepository)
-    val deleteAccount = DeleteAccountUseCase(accountRepository)
+    val saveAccount = SaveAccountUseCase(accountRepository, reminderScheduler)
+    val deleteAccount = DeleteAccountUseCase(accountRepository, reminderScheduler)
     val parseSharedAccount = ParseSharedAccountUseCase()
     val checkForUpdate = CheckForUpdateUseCase(updateRepository, versionProvider)
 

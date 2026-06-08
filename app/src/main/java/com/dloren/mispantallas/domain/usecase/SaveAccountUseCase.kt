@@ -1,13 +1,17 @@
 package com.dloren.mispantallas.domain.usecase
 
 import com.dloren.mispantallas.domain.model.Account
+import com.dloren.mispantallas.domain.reminder.ReminderScheduler
 import com.dloren.mispantallas.domain.repository.AccountRepository
 
 /**
- * Guarda una cuenta (alta o edición). Normaliza los campos de texto antes de
- * persistir y asegura una duración no negativa.
+ * Guarda una cuenta (alta o edición). Normaliza los campos antes de persistir y
+ * programa el recordatorio de vencimiento (un día antes).
  */
-class SaveAccountUseCase(private val repository: AccountRepository) {
+class SaveAccountUseCase(
+    private val repository: AccountRepository,
+    private val reminderScheduler: ReminderScheduler
+) {
     suspend operator fun invoke(account: Account): Long {
         val normalized = account.copy(
             email = account.email.trim(),
@@ -18,6 +22,8 @@ class SaveAccountUseCase(private val repository: AccountRepository) {
             clientPhone = account.clientPhone.trim(),
             durationDays = account.durationDays.coerceAtLeast(0)
         )
-        return repository.saveAccount(normalized)
+        val id = repository.saveAccount(normalized)
+        reminderScheduler.schedule(normalized.copy(id = id))
+        return id
     }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.dloren.mispantallas.domain.model.Account
 import com.dloren.mispantallas.domain.usecase.DeleteAccountUseCase
 import com.dloren.mispantallas.domain.usecase.GetAccountUseCase
+import com.dloren.mispantallas.domain.usecase.ParseSharedAccountUseCase
 import com.dloren.mispantallas.domain.usecase.SaveAccountUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,7 @@ class AccountFormViewModel(
     private val getAccount: GetAccountUseCase,
     private val saveAccount: SaveAccountUseCase,
     private val deleteAccount: DeleteAccountUseCase,
+    private val parseSharedAccount: ParseSharedAccountUseCase,
     consumeSharedDraft: () -> Account?
 ) : ViewModel() {
 
@@ -50,6 +52,31 @@ class AccountFormViewModel(
         _uiState.update { it.copy(durationText = v.filter { c -> c.isDigit() }) }
 
     fun onStartDateChange(millis: Long) = _uiState.update { it.copy(startDateMillis = millis) }
+
+    /**
+     * Aplica un texto pegado "a granel": detecta cada dato y completa los campos
+     * correspondientes (sin pisar los que ya tengan valor si el texto no los trae).
+     * @return true si detectó al menos un dato.
+     */
+    fun applyPastedData(text: String): Boolean {
+        val parsed = parseSharedAccount(text) ?: return false
+        _uiState.update { s ->
+            s.copy(
+                email = parsed.email.ifBlank { s.email },
+                password = parsed.password.ifBlank { s.password },
+                profileName = parsed.profileName.ifBlank { s.profileName },
+                pin = parsed.pin.ifBlank { s.pin },
+                platform = parsed.platform.ifBlank { s.platform },
+                clientPhone = parsed.clientPhone.ifBlank { s.clientPhone },
+                durationText = if (parsed.durationDays != 30) {
+                    parsed.durationDays.toString()
+                } else {
+                    s.durationText
+                }
+            )
+        }
+        return true
+    }
 
     fun save() {
         viewModelScope.launch {

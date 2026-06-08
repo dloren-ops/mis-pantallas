@@ -31,6 +31,7 @@ object AppViewModelProvider {
                 getAccount = container.getAccount,
                 saveAccount = container.saveAccount,
                 deleteAccount = container.deleteAccount,
+                parseSharedAccount = container.parseSharedAccount,
                 consumeSharedDraft = container::consumeSharedDraft
             )
         }

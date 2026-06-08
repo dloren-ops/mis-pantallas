@@ -48,4 +48,18 @@
     <string name="update_now">Actualizar</string>
     <string name="later">Después</string>
     <string name="update_error">No se pudo buscar la actualización: %1$s</string>
+
+    <!-- Recordatorios de vencimiento -->
+    <string name="reminder_channel_name">Recordatorios de vencimiento</string>
+    <string name="reminder_channel_desc">Avisos un día antes de que venza una cuenta.</string>
+    <string name="reminder_title">Vence mañana</string>
+    <string name="reminder_text">%1$s vence mañana. Tocá para recordarle al cliente que renueve.</string>
+    <string name="renewal_whatsapp_message">¡Hola! Te recordamos que tu cuenta%1$s vence mañana. ¿Querés renovarla?</string>
+
+    <!-- Pegado inteligente -->
+    <string name="paste_data">Pegar datos</string>
+    <string name="paste_hint">Pegá todos los datos juntos (correo, contraseña, PIN, plataforma, etc.) en cualquier orden.</string>
+    <string name="detect_fill">Detectar y completar</string>
+    <string name="paste_detected">Datos detectados y completados.</string>
+    <string name="paste_not_detected">No se pudo detectar ningún dato del texto pegado.</string>
 </resources>
