@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Mis Pantallas</string>
+
+    <!-- Pantalla principal -->
+    <string name="title_accounts">Mis Pantallas</string>
+    <string name="add_account">Agregar cuenta</string>
+    <string name="no_accounts">Todavía no tenés cuentas guardadas.\nTocá + para agregar una.</string>
+
+    <!-- Formulario -->
+    <string name="new_account">Nueva cuenta</string>
+    <string name="edit_account">Editar cuenta</string>
+    <string name="field_email">Correo</string>
+    <string name="field_password">Contraseña</string>
+    <string name="field_profile">Nombre de perfil</string>
+    <string name="field_pin">PIN</string>
+    <string name="field_platform">Plataforma</string>
+    <string name="field_client_phone">WhatsApp del cliente (con código de país)</string>
+    <string name="field_duration">Duración del alquiler (días)</string>
+    <string name="field_start_date">Fecha de inicio</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+
+    <!-- Cuenta regresiva -->
+    <string name="days_left">%1$d días restantes</string>
+    <string name="one_day_left">1 día restante</string>
+    <string name="last_day">Último día</string>
+    <string name="expired">Vencido</string>
+    <string name="expired_ago">Vencido hace %1$d días</string>
+
+    <!-- WhatsApp -->
+    <string name="send_whatsapp">Enviar por WhatsApp</string>
+    <string name="whatsapp_not_installed">WhatsApp no está instalado en este dispositivo.</string>
+    <string name="imported_from_share">Datos recibidos. Revisá y guardá.</string>
+
+    <!-- Mensaje predeterminado de WhatsApp -->
+    <string name="default_whatsapp_message">¡Hola! Estos son los datos de tu cuenta:</string>
+</resources>
