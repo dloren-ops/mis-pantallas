@@ -4,20 +4,20 @@ import com.dloren.mispantallas.domain.model.Account
 import java.util.Locale
 
 /**
- * Convierte un texto "a granel" (pegado o compartido desde WhatsApp) en una
- * [Account], ubicando cada dato en su campo **sin importar el orden**.
+ * Convierte un texto "a granel" (pegado o compartido) en una [Account], ubicando
+ * cada dato en su campo **sin importar el orden** y tolerando varios formatos:
  *
- * Estrategia:
- *  1. Por cada línea con formato "etiqueta: valor" (también acepta "=" y "-")
- *     asigna el valor al campo según la etiqueta (correo, contraseña, perfil,
- *     PIN, plataforma, teléfono, duración).
- *  2. Como respaldo, escanea todo el texto para detectar datos aunque NO tengan
- *     etiqueta: un correo (por el "@"), una plataforma conocida (Netflix,
- *     Disney, etc.) y un teléfono largo.
+ *  - "etiqueta: valor" o "etiqueta = valor" (ej. `Correo: x@x.com`).
+ *  - "etiqueta valor" sin separador (ej. `PIN 1234`, `Clave abc`).
+ *  - La **contraseña sin etiqueta** escrita en la línea siguiente al correo.
+ *  - Un número suelto de 3 a 6 dígitos se toma como **PIN**.
+ *  - El correo se detecta por el "@" y la plataforma por nombre conocido.
  *
- * Lógica pura (sin dependencias de Android), por lo que es fácilmente testeable.
+ * Lógica pura (sin Android), fácilmente testeable.
  */
 class ParseSharedAccountUseCase {
+
+    private enum class Field { EMAIL, PASSWORD, PROFILE, PIN, PHONE, PLATFORM, DURATION }
 
     private val platformKeywords = listOf(
         "netflix", "disney", "hbo", "max", "prime", "amazon", "star", "paramount",
@@ -39,48 +39,82 @@ class ParseSharedAccountUseCase {
         var duration: Int? = null
         var matchedAny = false
 
-        // --- Paso 1: líneas "etiqueta: valor" ---
+        // Cuando acabamos de detectar el correo, la siguiente línea sin etiqueta
+        // se asume que es la contraseña (hábito común al pegar credenciales).
+        var expectPasswordNext = false
+
         text.lines().forEach { rawLine ->
             val line = rawLine.trim()
-            val sepIndex = line.indexOfFirst { it == ':' || it == '=' }
-            if (sepIndex <= 0) return@forEach
-            val key = line.substring(0, sepIndex).trim().lowercase(Locale.getDefault())
-            val value = line.substring(sepIndex + 1).trim()
-            if (value.isEmpty()) return@forEach
+            if (line.isEmpty()) return@forEach
 
-            when {
-                key.contains("correo") || key.contains("email") || key.contains("mail") ||
-                    key.contains("usuario") || key.contains("user") -> {
-                    email = value; matchedAny = true
-                }
-                key.contains("contrase") || key.contains("password") || key.contains("clave") ||
-                    key.contains("pass") -> {
-                    password = value; matchedAny = true
-                }
-                key.contains("perfil") || key.contains("profile") -> {
-                    profile = value; matchedAny = true
-                }
-                key.contains("pin") -> {
-                    pin = value; matchedAny = true
-                }
-                key.contains("tel") || key.contains("whats") || key.contains("celular") ||
-                    key.contains("numero") || key.contains("número") || key.contains("phone") -> {
-                    clientPhone = value; matchedAny = true
-                }
-                key.contains("plataforma") || key.contains("platform") ||
-                    key.contains("servicio") || key.contains("cuenta") -> {
-                    platform = value; matchedAny = true
-                }
-                key.contains("duraci") || key.contains("dias") || key.contains("días") ||
-                    key.contains("days") || key.contains("vence") || key.contains("plan") -> {
-                    Regex("\\d+").find(value)?.value?.toIntOrNull()?.let {
-                        duration = it; matchedAny = true
+            // 1) Intentar separar "clave: valor" o "clave = valor".
+            var key: String? = null
+            var value = ""
+            val sepIndex = line.indexOfFirst { it == ':' || it == '=' }
+            if (sepIndex > 0) {
+                key = line.substring(0, sepIndex).trim().lowercase(Locale.getDefault())
+                value = line.substring(sepIndex + 1).trim()
+            } else {
+                // 2) "clave valor" sin separador: la primera palabra es la etiqueta.
+                val firstSpace = line.indexOf(' ')
+                if (firstSpace > 0) {
+                    val firstWord = line.substring(0, firstSpace).trim()
+                        .lowercase(Locale.getDefault())
+                    if (fieldFor(firstWord) != null) {
+                        key = firstWord
+                        value = line.substring(firstSpace + 1).trim()
                     }
                 }
             }
+
+            val field = key?.let { fieldFor(it) }
+            if (field != null && value.isNotEmpty()) {
+                when (field) {
+                    Field.EMAIL -> {
+                        email = value
+                        // Si el correo no trae contraseña en la misma línea, la
+                        // esperamos en la siguiente.
+                        expectPasswordNext = password.isBlank()
+                    }
+                    Field.PASSWORD -> { password = value; expectPasswordNext = false }
+                    Field.PROFILE -> { profile = value; expectPasswordNext = false }
+                    Field.PIN -> {
+                        pin = value.filter { c -> c.isLetterOrDigit() }
+                        expectPasswordNext = false
+                    }
+                    Field.PHONE -> { clientPhone = value; expectPasswordNext = false }
+                    Field.PLATFORM -> { platform = value; expectPasswordNext = false }
+                    Field.DURATION -> {
+                        Regex("\\d+").find(value)?.value?.toIntOrNull()?.let { duration = it }
+                        expectPasswordNext = false
+                    }
+                }
+                matchedAny = true
+                return@forEach
+            }
+
+            // 3) Línea sin etiqueta reconocida.
+            val lower = line.lowercase(Locale.getDefault())
+            val isPlatformName = platformKeywords.any { lower.contains(it) }
+
+            when {
+                // Contraseña justo debajo del correo (y que no sea la plataforma).
+                expectPasswordNext && password.isBlank() && !isPlatformName -> {
+                    password = line
+                    matchedAny = true
+                    expectPasswordNext = false
+                }
+                // Número suelto de 3 a 6 dígitos -> PIN.
+                pin.isBlank() && line.length in 3..6 && line.all { it.isDigit() } -> {
+                    pin = line
+                    matchedAny = true
+                    expectPasswordNext = false
+                }
+                else -> expectPasswordNext = false
+            }
         }
 
-        // --- Paso 2: respaldo sin etiquetas ---
+        // 4) Respaldos sin etiqueta.
         if (email.isBlank()) {
             emailRegex.find(text)?.value?.let { email = it; matchedAny = true }
         }
@@ -103,5 +137,22 @@ class ParseSharedAccountUseCase {
             clientPhone = clientPhone,
             durationDays = duration ?: 30
         )
+    }
+
+    /** Determina a qué campo corresponde una etiqueta. */
+    private fun fieldFor(key: String): Field? = when {
+        key.contains("correo") || key.contains("email") || key.contains("mail") ||
+            key.contains("usuario") || key.contains("user") -> Field.EMAIL
+        key.contains("contrase") || key.contains("password") || key.contains("clave") ||
+            key.contains("pass") -> Field.PASSWORD
+        key.contains("perfil") || key.contains("profile") -> Field.PROFILE
+        key.contains("pin") -> Field.PIN
+        key.contains("tel") || key.contains("whats") || key.contains("celular") ||
+            key.contains("numero") || key.contains("número") || key.contains("phone") -> Field.PHONE
+        key.contains("plataforma") || key.contains("platform") ||
+            key.contains("servicio") -> Field.PLATFORM
+        key.contains("duraci") || key.contains("dias") || key.contains("días") ||
+            key.contains("days") || key.contains("vence") || key.contains("plan") -> Field.DURATION
+        else -> null
     }
 }
