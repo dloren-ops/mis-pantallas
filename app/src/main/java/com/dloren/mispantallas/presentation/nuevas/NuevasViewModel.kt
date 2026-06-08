@@ -41,34 +41,6 @@ class NuevasViewModel(
     }
 
     /**
-     * Genera [count] cuentas sin vender con el mismo correo/contraseña/plataforma,
-     * una por cliente (perfiles "Perfil 1".."Perfil N"). Listas para asignar y enviar.
-     */
-    fun generate(
-        email: String,
-        password: String,
-        platform: String,
-        durationDays: Int,
-        count: Int
-    ) {
-        val n = count.coerceIn(1, 20)
-        viewModelScope.launch {
-            for (i in 1..n) {
-                saveAccount(
-                    Account(
-                        email = email.trim(),
-                        password = password.trim(),
-                        platform = platform.trim(),
-                        profileName = "Perfil $i",
-                        durationDays = durationDays.coerceAtLeast(1),
-                        status = AccountStatus.NOT_SOLD
-                    )
-                )
-            }
-        }
-    }
-
-    /**
      * Genera cuentas con nombres de perfil y PIN predefinidos, en orden:
      * perfiles [PROFILE_NAMES] y PIN 9876, 8876, 7876, ... (primer dígito que baja).
      */

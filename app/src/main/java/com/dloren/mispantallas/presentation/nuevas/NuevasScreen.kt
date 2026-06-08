@@ -37,6 +37,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,30 +72,41 @@ fun NuevasScreen(
 ) {
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var showGenerate by remember { mutableStateOf(false) }
     var showGenerateProfiles by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.nuevas_title)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },
                 actions = {
-                    TextButton(onClick = { showGenerate = true }) {
-                        Text(stringResource(R.string.generate))
-                    }
-                    TextButton(onClick = { showGenerateProfiles = true }) {
+                    TextButton(
+                        onClick = { showGenerateProfiles = true },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
                         Text(stringResource(R.string.generate_profiles))
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddAccount) {
+            FloatingActionButton(
+                onClick = onAddAccount,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_account))
             }
         }
@@ -132,16 +145,6 @@ fun NuevasScreen(
                 }
             }
         }
-    }
-
-    if (showGenerate) {
-        GenerateDialog(
-            onDismiss = { showGenerate = false },
-            onGenerate = { email, password, platform, duration, count ->
-                viewModel.generate(email, password, platform, duration, count)
-                showGenerate = false
-            }
-        )
     }
 
     if (showGenerateProfiles) {
@@ -219,87 +222,6 @@ private fun NuevaCard(account: Account, onClick: () -> Unit, onSend: () -> Unit)
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun GenerateDialog(
-    onDismiss: () -> Unit,
-    onGenerate: (String, String, String, Int, Int) -> Unit
-) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var platform by remember { mutableStateOf("") }
-    var duration by remember { mutableStateOf("30") }
-    var count by remember { mutableStateOf(2) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.generate_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = stringResource(R.string.generate_desc),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text(stringResource(R.string.field_email)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text(stringResource(R.string.field_password)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = platform,
-                    onValueChange = { platform = it },
-                    label = { Text(stringResource(R.string.field_platform)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = duration,
-                    onValueChange = { duration = it.filter { c -> c.isDigit() } },
-                    label = { Text(stringResource(R.string.field_duration)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = stringResource(R.string.how_many_clients),
-                    style = MaterialTheme.typography.labelLarge
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(2, 3, 4, 5).forEach { n ->
-                        FilterChip(
-                            selected = count == n,
-                            onClick = { count = n },
-                            label = { Text(n.toString()) }
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = email.isNotBlank(),
-                onClick = {
-                    onGenerate(email, password, platform, duration.toIntOrNull() ?: 30, count)
-                }
-            ) { Text(stringResource(R.string.generate)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-        }
-    )
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

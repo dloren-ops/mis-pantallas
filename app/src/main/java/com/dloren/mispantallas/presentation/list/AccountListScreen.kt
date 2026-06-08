@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -84,8 +88,18 @@ fun AccountListScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.title_accounts)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 actions = {
-                    TextButton(onClick = onOpenNuevas) {
+                    TextButton(
+                        onClick = onOpenNuevas,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
                         Text(stringResource(R.string.open_nuevas))
                     }
                     IconButton(onClick = onOpenRenewals) {
@@ -132,8 +146,8 @@ fun AccountListScreen(
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(accounts, key = { it.id }) { account ->
                     AccountCard(
@@ -192,21 +206,21 @@ private fun AccountCard(
 ) {
     val platformColor = Platforms.colorFor(account.platform)
     val title = account.platform.ifBlank { account.email.ifBlank { "Cuenta" } }
+    val subtitle = account.profileName.ifBlank { account.email }
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar con la inicial y el color de la plataforma.
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(38.dp)
                     .clip(CircleShape)
                     .background(platformColor),
                 contentAlignment = Alignment.Center
@@ -214,35 +228,41 @@ private fun AccountCard(
                 Text(
                     text = title.take(1).uppercase(),
                     color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
             }
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 12.dp)
+                    .padding(start = 10.dp)
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                if (account.profileName.isNotBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Perfil: ${account.profileName}",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
+                    CountdownText(account)
                 }
-                if (account.email.isNotBlank()) {
-                    Text(
-                        text = account.email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 3.dp)
+                ) {
+                    StatusBadge(account)
+                    if (subtitle.isNotBlank()) {
+                        Text(
+                            text = "  $subtitle",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
-                StatusBadge(account)
-                CountdownLabel(account)
             }
             IconButton(onClick = onSend) {
                 Icon(
@@ -265,16 +285,14 @@ private fun StatusBadge(account: Account) {
         fontWeight = FontWeight.Bold,
         color = Color.White,
         modifier = Modifier
-            .padding(top = 6.dp)
             .clip(RoundedCornerShape(50))
             .background(bg)
-            .padding(horizontal = 10.dp, vertical = 3.dp)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
     )
 }
 
 @Composable
-private fun CountdownLabel(account: Account) {
-    // El conteo del cliente solo aplica si está vendida.
+private fun CountdownText(account: Account) {
     if (!account.isSold) return
     val remaining = account.remainingClientDays()
     val (text, color) = when {
@@ -286,9 +304,9 @@ private fun CountdownLabel(account: Account) {
     }
     Text(
         text = text,
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
         color = color,
-        modifier = Modifier.padding(top = 4.dp)
+        maxLines = 1
     )
 }
