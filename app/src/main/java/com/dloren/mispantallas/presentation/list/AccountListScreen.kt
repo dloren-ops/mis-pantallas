@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,6 +86,7 @@ fun AccountListScreen(
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
     val summary by viewModel.summary.collectAsStateWithLifecycle()
+    val filter by viewModel.filter.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -209,7 +211,11 @@ fun AccountListScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            SummaryBar(summary)
+            SummaryBar(
+                summary = summary,
+                selected = filter,
+                onSelect = viewModel::onFilterChange
+            )
             OutlinedTextField(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
@@ -424,9 +430,12 @@ private fun CountdownText(account: Account) {
     )
 }
 
-
 @Composable
-private fun SummaryBar(summary: ListSummary) {
+private fun SummaryBar(
+    summary: ListSummary,
+    selected: ListFilter,
+    onSelect: (ListFilter) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -434,32 +443,66 @@ private fun SummaryBar(summary: ListSummary) {
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        SummaryChip(stringResource(R.string.summary_sold), summary.sold, Color(0xFF2E7D32))
-        SummaryChip(stringResource(R.string.summary_due_soon), summary.dueSoon, Color(0xFFE65100))
-        SummaryChip(stringResource(R.string.summary_expired), summary.expired, Color(0xFFB3261E))
-        SummaryChip(stringResource(R.string.summary_not_sold), summary.notSold, Color(0xFF555555))
+        SummaryChip(
+            label = stringResource(R.string.summary_sold),
+            count = summary.sold,
+            color = Color(0xFF2E7D32),
+            selected = selected == ListFilter.SOLD,
+            onClick = { onSelect(ListFilter.SOLD) }
+        )
+        SummaryChip(
+            label = stringResource(R.string.summary_due_soon),
+            count = summary.dueSoon,
+            color = Color(0xFFE65100),
+            selected = selected == ListFilter.DUE_SOON,
+            onClick = { onSelect(ListFilter.DUE_SOON) }
+        )
+        SummaryChip(
+            label = stringResource(R.string.summary_expired),
+            count = summary.expired,
+            color = Color(0xFFB3261E),
+            selected = selected == ListFilter.EXPIRED,
+            onClick = { onSelect(ListFilter.EXPIRED) }
+        )
+        SummaryChip(
+            label = stringResource(R.string.summary_not_sold),
+            count = summary.notSold,
+            color = Color(0xFF555555),
+            selected = selected == ListFilter.NOT_SOLD,
+            onClick = { onSelect(ListFilter.NOT_SOLD) }
+        )
     }
 }
 
 @Composable
-private fun SummaryChip(label: String, count: Int, color: Color) {
+private fun SummaryChip(
+    label: String,
+    count: Int,
+    color: Color,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val bg = if (selected) color else color.copy(alpha = 0.12f)
+    val countColor = if (selected) Color.White else color
+    val labelColor = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(color.copy(alpha = 0.12f))
+            .background(bg)
+            .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
             text = count.toString(),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = countColor
         )
         Text(
             text = "  $label",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = labelColor
         )
     }
 }

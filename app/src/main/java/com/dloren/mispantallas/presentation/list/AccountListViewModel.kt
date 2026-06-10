@@ -48,6 +48,9 @@ data class ListSummary(
     val notSold: Int = 0
 )
 
+/** Filtro activo de la lista (se elige tocando los contadores). */
+enum class ListFilter { SOLD, DUE_SOON, EXPIRED, NOT_SOLD }
+
 class AccountListViewModel(
     observeAccounts: ObserveAccountsUseCase,
     private val checkForUpdate: CheckForUpdateUseCase,
@@ -63,14 +66,17 @@ class AccountListViewModel(
 
     fun onQueryChange(q: String) { _query.value = q }
 
-    // Lista principal: si no hay búsqueda, muestra las VENDIDAS; si hay búsqueda,
-    // busca en TODAS (vendidas y no vendidas) por correo, número, plataforma o perfil.
+    private val _filter = MutableStateFlow(ListFilter.SOLD)
+    val filter: StateFlow<ListFilter> = _filter.asStateFlow()
+
+    fun onFilterChange(f: ListFilter) { _filter.value = f }
+
+    // Si hay búsqueda, busca en TODAS por correo/número/plataforma/perfil;
+    // si no, aplica el filtro elegido en los contadores.
     val accounts: StateFlow<List<Account>> =
-        combine(observeAccounts(), _query) { list, q ->
+        combine(observeAccounts(), _query, _filter) { list, q, f ->
             val query = q.trim()
-            if (query.isBlank()) {
-                list.filter { it.isSold }
-            } else {
+            if (query.isNotBlank()) {
                 val digits = query.filter { it.isDigit() }
                 list.filter { acc ->
                     acc.email.contains(query, ignoreCase = true) ||
@@ -78,6 +84,15 @@ class AccountListViewModel(
                         acc.profileName.contains(query, ignoreCase = true) ||
                         (digits.isNotEmpty() &&
                             acc.clientPhone.filter { c -> c.isDigit() }.contains(digits))
+                }
+            } else {
+                when (f) {
+                    ListFilter.SOLD -> list.filter { it.isSold }
+                    ListFilter.DUE_SOON ->
+                        list.filter { it.isSold && it.remainingClientDays() in 0..3 }
+                    ListFilter.EXPIRED ->
+                        list.filter { it.isSold && it.remainingClientDays() < 0 }
+                    ListFilter.NOT_SOLD -> list.filter { !it.isSold }
                 }
             }
         }.stateIn(
