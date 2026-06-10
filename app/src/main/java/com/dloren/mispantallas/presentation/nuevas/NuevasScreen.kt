@@ -1,6 +1,7 @@
 package com.dloren.mispantallas.presentation.nuevas
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -170,61 +171,75 @@ fun NuevasScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NuevaCard(account: Account, onClick: () -> Unit, onSend: () -> Unit) {
     val platformColor = Platforms.colorFor(account.platform)
     val title = account.platform.ifBlank { account.email.ifBlank { "Cuenta" } }
+    // La tarjeta NO es cliqueable como un todo: así el ícono de enviar y el área de
+    // edición son zonas de toque independientes (tocar enviar muestra el cuadro del
+    // número sin navegar a editar por error).
     Card(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(platformColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = title.take(1).uppercase(),
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Column(
+            // Zona que abre la edición.
+            Row(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 12.dp)
+                    .clickable(onClick = onClick)
+                    .padding(start = 16.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                if (account.profileName.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(platformColor),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = "Perfil: ${account.profileName}",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = title.take(1).uppercase(),
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                if (account.email.isNotBlank()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp)
+                ) {
                     Text(
-                        text = account.email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
+                    if (account.profileName.isNotBlank()) {
+                        Text(
+                            text = "Perfil: ${account.profileName}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    if (account.email.isNotBlank()) {
+                        Text(
+                            text = account.email,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
-            IconButton(onClick = onSend) {
+            // Botón de enviar (independiente).
+            IconButton(
+                onClick = onSend,
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
                 Icon(
                     Icons.AutoMirrored.Filled.Send,
                     contentDescription = stringResource(R.string.send_whatsapp),
