@@ -15,6 +15,8 @@ class AccountRepositoryImpl(private val dao: AccountDao) : AccountRepository {
 
     override suspend fun getAccount(id: Long): Account? = dao.getById(id)?.toDomain()
 
+    override suspend fun getAllOnce(): List<Account> = dao.getAll().map { it.toDomain() }
+
     override suspend fun saveAccount(account: Account): Long {
         return if (account.id == 0L) {
             dao.insert(account.toEntity())

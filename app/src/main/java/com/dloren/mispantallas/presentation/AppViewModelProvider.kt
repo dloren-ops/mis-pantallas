@@ -25,6 +25,8 @@ object AppViewModelProvider {
                 checkForUpdate = container.checkForUpdate,
                 markAsSold = container.markAsSold,
                 markAsNotSold = container.markAsNotSold,
+                exportAccounts = container.exportAccounts,
+                importAccounts = container.importAccounts,
                 apkInstaller = container.apkInstaller
             )
         }

@@ -1,7 +1,10 @@
 package com.dloren.mispantallas.presentation.list
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -29,6 +34,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -42,6 +49,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,9 +68,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dloren.mispantallas.R
 import com.dloren.mispantallas.domain.model.Account
 import com.dloren.mispantallas.presentation.AppViewModelProvider
+import com.dloren.mispantallas.presentation.backup.BackupIo
 import com.dloren.mispantallas.presentation.platform.Platforms
 import com.dloren.mispantallas.presentation.whatsapp.WhatsAppLauncher
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,8 +84,34 @@ fun AccountListScreen(
 ) {
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    val summary by viewModel.summary.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var menuExpanded by remember { mutableStateOf(false) }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    val json = BackupIo.readText(context, uri)
+                    val n = viewModel.restoreBackup(json)
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.import_done, n),
+                        Toast.LENGTH_LONG
+                    ).show()
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.import_error),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
 
     // Escuchar eventos puntuales (Toasts).
     LaunchedEffect(Unit) {
@@ -128,11 +167,49 @@ fun AccountListScreen(
                             )
                         }
                     }
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                Icons.Filled.MoreVert,
+                                contentDescription = stringResource(R.string.more_options)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.backup_export)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    scope.launch {
+                                        try {
+                                            BackupIo.shareJson(context, viewModel.buildBackupJson())
+                                        } catch (e: Exception) {
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.backup_error),
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    }
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.backup_import)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    importLauncher.launch("*/*")
+                                }
+                            )
+                        }
+                    }
                 }
             )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            SummaryBar(summary)
             OutlinedTextField(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
@@ -345,4 +422,44 @@ private fun CountdownText(account: Account) {
         color = color,
         maxLines = 1
     )
+}
+
+
+@Composable
+private fun SummaryBar(summary: ListSummary) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SummaryChip(stringResource(R.string.summary_sold), summary.sold, Color(0xFF2E7D32))
+        SummaryChip(stringResource(R.string.summary_due_soon), summary.dueSoon, Color(0xFFE65100))
+        SummaryChip(stringResource(R.string.summary_expired), summary.expired, Color(0xFFB3261E))
+        SummaryChip(stringResource(R.string.summary_not_sold), summary.notSold, Color(0xFF555555))
+    }
+}
+
+@Composable
+private fun SummaryChip(label: String, count: Int, color: Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            text = "  $label",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }

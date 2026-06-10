@@ -15,7 +15,9 @@ import com.dloren.mispantallas.domain.repository.AccountRepository
 import com.dloren.mispantallas.domain.repository.UpdateRepository
 import com.dloren.mispantallas.domain.usecase.CheckForUpdateUseCase
 import com.dloren.mispantallas.domain.usecase.DeleteAccountUseCase
+import com.dloren.mispantallas.domain.usecase.ExportAccountsUseCase
 import com.dloren.mispantallas.domain.usecase.GetAccountUseCase
+import com.dloren.mispantallas.domain.usecase.ImportAccountsUseCase
 import com.dloren.mispantallas.domain.usecase.MarkAsNotSoldUseCase
 import com.dloren.mispantallas.domain.usecase.MarkAsSoldUseCase
 import com.dloren.mispantallas.domain.usecase.ObserveAccountsUseCase
@@ -59,6 +61,8 @@ class AppContainer(context: Context) {
     val markAsNotSold = MarkAsNotSoldUseCase(accountRepository, reminderScheduler)
     val parseSharedAccount = ParseSharedAccountUseCase()
     val checkForUpdate = CheckForUpdateUseCase(updateRepository, versionProvider)
+    val exportAccounts = ExportAccountsUseCase(accountRepository)
+    val importAccounts = ImportAccountsUseCase(accountRepository)
 
     /**
      * Borrador recibido por "Compartir" (WhatsApp) pendiente de mostrar en el

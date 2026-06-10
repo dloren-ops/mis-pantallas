@@ -73,6 +73,11 @@ class AccountFormViewModel(
         it.copy(status = AccountStatus.NOT_SOLD, soldDateMillis = 0L)
     }
 
+    /** Renueva la venta: reinicia el conteo desde hoy (se aplica al guardar). */
+    fun renewSaleNow() = _uiState.update {
+        it.copy(status = AccountStatus.SOLD, soldDateMillis = System.currentTimeMillis())
+    }
+
     /**
      * Aplica un texto pegado "a granel": detecta cada dato y completa los campos
      * correspondientes (sin pisar los que ya tengan valor si el texto no los trae).

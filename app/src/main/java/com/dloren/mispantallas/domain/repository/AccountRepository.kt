@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface AccountRepository {
     fun observeAccounts(): Flow<List<Account>>
     suspend fun getAccount(id: Long): Account?
+    suspend fun getAllOnce(): List<Account>
     suspend fun saveAccount(account: Account): Long
     suspend fun deleteAccount(account: Account)
 }

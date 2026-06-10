@@ -2,11 +2,14 @@ package com.dloren.mispantallas.presentation.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dloren.mispantallas.data.backup.BackupCodec
 import com.dloren.mispantallas.data.installer.ApkInstaller
 import com.dloren.mispantallas.domain.model.Account
 import com.dloren.mispantallas.domain.model.AppRelease
 import com.dloren.mispantallas.domain.model.UpdateResult
 import com.dloren.mispantallas.domain.usecase.CheckForUpdateUseCase
+import com.dloren.mispantallas.domain.usecase.ExportAccountsUseCase
+import com.dloren.mispantallas.domain.usecase.ImportAccountsUseCase
 import com.dloren.mispantallas.domain.usecase.MarkAsNotSoldUseCase
 import com.dloren.mispantallas.domain.usecase.MarkAsSoldUseCase
 import com.dloren.mispantallas.domain.usecase.ObserveAccountsUseCase
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -36,11 +40,21 @@ sealed interface UpdateEvent {
     data class Error(val message: String) : UpdateEvent
 }
 
+/** Contadores para el resumen arriba de la lista. */
+data class ListSummary(
+    val sold: Int = 0,
+    val dueSoon: Int = 0,
+    val expired: Int = 0,
+    val notSold: Int = 0
+)
+
 class AccountListViewModel(
     observeAccounts: ObserveAccountsUseCase,
     private val checkForUpdate: CheckForUpdateUseCase,
     private val markAsSold: MarkAsSoldUseCase,
     private val markAsNotSold: MarkAsNotSoldUseCase,
+    private val exportAccounts: ExportAccountsUseCase,
+    private val importAccounts: ImportAccountsUseCase,
     private val apkInstaller: ApkInstaller
 ) : ViewModel() {
 
@@ -74,6 +88,22 @@ class AccountListViewModel(
 
     private val _updateState = MutableStateFlow<UpdateUiState>(UpdateUiState.Idle)
     val updateState: StateFlow<UpdateUiState> = _updateState.asStateFlow()
+
+    /** Resumen de contadores (sobre TODAS las cuentas). */
+    val summary: StateFlow<ListSummary> = observeAccounts()
+        .map { list ->
+            ListSummary(
+                sold = list.count { it.isSold },
+                dueSoon = list.count { it.isSold && it.remainingClientDays() in 0..3 },
+                expired = list.count { it.isSold && it.remainingClientDays() < 0 },
+                notSold = list.count { !it.isSold }
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = ListSummary()
+        )
 
     private val _events = Channel<UpdateEvent>(Channel.BUFFERED)
     val events: Flow<UpdateEvent> = _events.receiveAsFlow()
@@ -131,4 +161,11 @@ class AccountListViewModel(
     fun markNotSold(account: Account) {
         viewModelScope.launch { markAsNotSold(account) }
     }
+
+    /** Genera el JSON de respaldo con todas las cuentas. */
+    suspend fun buildBackupJson(): String = BackupCodec.toJson(exportAccounts())
+
+    /** Restaura cuentas desde un JSON de respaldo. Devuelve cuántas importó. */
+    suspend fun restoreBackup(json: String): Int =
+        importAccounts(BackupCodec.fromJson(json))
 }
