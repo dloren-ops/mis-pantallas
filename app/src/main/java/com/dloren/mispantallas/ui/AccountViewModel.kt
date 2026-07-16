@@ -47,8 +47,29 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Actualiza el correo de un grupo de cuentas (p. ej. otros perfiles del mismo login). */
+    fun updateEmailForAccounts(accounts: List<Account>, newEmail: String) {
+        if (accounts.isEmpty()) return
+        viewModelScope.launch {
+            accounts.forEach { repository.save(it.copy(email = newEmail)) }
+        }
+    }
+
     fun delete(account: Account) {
         viewModelScope.launch { repository.delete(account) }
+    }
+
+    fun deleteAll(accounts: List<Account>) {
+        if (accounts.isEmpty()) return
+        viewModelScope.launch { repository.deleteAll(accounts) }
+    }
+
+    /** Inserta cuentas importadas desde un respaldo, siempre como filas nuevas. */
+    fun importAccounts(imported: List<Account>, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            imported.forEach { repository.save(it.copy(id = 0L)) }
+            onDone()
+        }
     }
 
     companion object {

@@ -2,7 +2,9 @@ package com.dloren.mispantallas.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.concurrent.TimeUnit
+import com.dloren.mispantallas.util.DateUtils
+import com.dloren.mispantallas.util.DateUtils.toStartOfDayMillis
+import java.time.temporal.ChronoUnit
 
 /**
  * Representa una cuenta / pantalla de streaming en alquiler.
@@ -21,22 +23,53 @@ data class Account(
     val platform: String = "",
     val clientPhone: String = "",
     val durationDays: Int = 30,
-    val startDateMillis: Long = System.currentTimeMillis()
+    val startDateMillis: Long = DateUtils.nowStartOfDayMillis(),
+    /** "SOLD" (asignada a un cliente) o "NOT_SOLD" (todavía sin asignar). */
+    val status: String = "SOLD",
+    /** Momento en que se le asignó/vendió a un cliente (0 si nunca se asignó). */
+    val soldDateMillis: Long = 0L,
+    /** Si es mayor a 0, cada cuántos días hay que renovarla (independiente de [durationDays]). */
+    val renewEveryDays: Int = 0,
+    /** Momento en que arrancó la suscripción con el proveedor (puede diferir de [startDateMillis]). */
+    val providerStartMillis: Long = 0L,
+    /** Precio del alquiler por cada ciclo de [durationDays] (0 si no se cargó). */
+    val price: Double = 0.0
 ) {
-    /** Fecha en la que vence el alquiler (epoch millis). */
+    /** Primer día (fecha local) en que el alquiler deja de ser válido. */
+    private val endLocalDate
+        get() = DateUtils.toLocalDate(startDateMillis).plusDays(durationDays.toLong())
+
+    /** Momento (medianoche, zona horaria local) en que vence el alquiler. */
     val endDateMillis: Long
-        get() = startDateMillis + TimeUnit.DAYS.toMillis(durationDays.toLong())
+        get() = endLocalDate.toStartOfDayMillis()
 
     /**
-     * Días restantes hasta el vencimiento (puede ser negativo si ya venció).
-     * Se calcula respecto al momento [now].
+     * Días de calendario restantes hasta el vencimiento (puede ser negativo si ya venció).
+     * Se calcula por fecha local (medianoche a medianoche), no por bloques de 24 horas
+     * desde el momento exacto en que se creó la cuenta.
      */
-    fun remainingDays(now: Long = System.currentTimeMillis()): Long {
-        val diff = endDateMillis - now
-        // Redondeo hacia arriba: mientras quede algo del día, cuenta como 1.
-        return Math.ceil(diff.toDouble() / TimeUnit.DAYS.toMillis(1)).toLong()
-    }
+    fun remainingDays(now: Long = System.currentTimeMillis()): Long =
+        ChronoUnit.DAYS.between(DateUtils.toLocalDate(now), endLocalDate)
 
-    /** true si el alquiler ya venció. */
-    fun isExpired(now: Long = System.currentTimeMillis()): Boolean = now >= endDateMillis
+    /** true si la fecha local de hoy ya alcanzó el día de vencimiento. */
+    fun isExpired(now: Long = System.currentTimeMillis()): Boolean = remainingDays(now) <= 0
+
+    /** Primer día (fecha local) en que toca renovar con el proveedor, si aplica. */
+    private val providerEndLocalDate
+        get() = DateUtils.toLocalDate(if (providerStartMillis > 0) providerStartMillis else startDateMillis)
+            .plusDays(renewEveryDays.toLong())
+
+    /**
+     * Días restantes hasta la próxima renovación con el proveedor (Netflix, Disney+, etc.),
+     * independiente de [remainingDays]. null si [renewEveryDays] es 0 (no aplica).
+     * Usa [providerStartMillis] como ancla, o [startDateMillis] si no se fijó uno propio.
+     *
+     * A diferencia de un ciclo automático, no se reinicia solo con el paso de los días:
+     * una vez vencida queda vencida (el valor sigue bajando, cada vez más negativo) hasta
+     * que se actualice manualmente la fecha de inicio con el proveedor (renovación real).
+     */
+    fun providerRemainingDays(now: Long = System.currentTimeMillis()): Long? {
+        if (renewEveryDays <= 0) return null
+        return ChronoUnit.DAYS.between(DateUtils.toLocalDate(now), providerEndLocalDate)
+    }
 }

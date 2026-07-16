@@ -32,9 +32,19 @@ object WhatsAppHelper {
     private const val L_START = "Inicio"
     private const val L_END = "Vence"
 
-    /** Construye el mensaje de texto con los datos de la cuenta. */
-    fun buildMessage(context: Context, account: Account): String {
-        val header = context.getString(R.string.default_whatsapp_message)
+    /**
+     * Construye el mensaje de texto con los datos de la cuenta. [customHeader] y
+     * [customFooter] son el encabezado y el mensaje final configurados en Ajustes;
+     * si vienen vacíos se usa el mensaje predeterminado (encabezado) o directamente
+     * no se agrega nada (mensaje final).
+     */
+    fun buildMessage(
+        context: Context,
+        account: Account,
+        customHeader: String = "",
+        customFooter: String = ""
+    ): String {
+        val header = customHeader.ifBlank { context.getString(R.string.default_whatsapp_message) }
         val sb = StringBuilder()
         sb.appendLine(header)
         sb.appendLine()
@@ -46,23 +56,68 @@ object WhatsAppHelper {
         sb.appendLine("$L_DURATION: ${account.durationDays}")
         sb.appendLine("$L_START: ${dateFormat.format(Date(account.startDateMillis))}")
         sb.appendLine("$L_END: ${dateFormat.format(Date(account.endDateMillis))}")
+        if (customFooter.isNotBlank()) {
+            sb.appendLine()
+            sb.appendLine(customFooter)
+        }
         return sb.toString().trim()
+    }
+
+    /**
+     * Construye el mensaje de saludo + pregunta de renovación para un cliente cuya
+     * pantalla está por vencer (o ya venció). [customMessage] es la plantilla
+     * configurada en Ajustes (admite los tokens {plataforma} y {fecha}); si viene
+     * vacía se usa la plantilla predeterminada.
+     */
+    fun buildRenewalReminderMessage(
+        context: Context,
+        account: Account,
+        customMessage: String = ""
+    ): String {
+        val template = customMessage.ifBlank { context.getString(R.string.default_renewal_reminder_message) }
+        val platformPhrase = if (account.platform.isNotBlank()) {
+            context.getString(R.string.renewal_reminder_platform_phrase, account.platform)
+        } else {
+            context.getString(R.string.renewal_reminder_platform_phrase_generic)
+        }
+        val dateStr = dateFormat.format(Date(account.endDateMillis))
+        return template
+            .replace("{plataforma}", platformPhrase)
+            .replace("{fecha}", dateStr)
+    }
+
+    /** Abre WhatsApp con el mensaje de recordatorio de renovación para el cliente de [account]. */
+    fun sendRenewalReminder(
+        context: Context,
+        account: Account,
+        customMessage: String = ""
+    ) {
+        sendText(context, account.clientPhone, buildRenewalReminderMessage(context, account, customMessage))
     }
 
     /**
      * Abre WhatsApp con el mensaje prellenado. Si la cuenta tiene teléfono del
      * cliente, abre el chat directo; si no, abre el selector de contacto.
      */
-    fun sendToWhatsApp(context: Context, account: Account) {
-        val message = buildMessage(context, account)
-        val phone = account.clientPhone.filter { it.isDigit() }
+    fun sendToWhatsApp(
+        context: Context,
+        account: Account,
+        customHeader: String = "",
+        customFooter: String = ""
+    ) {
+        sendText(context, account.clientPhone, buildMessage(context, account, customHeader, customFooter))
+    }
+
+    /** Abre WhatsApp con un texto arbitrario, sin depender de una [Account]. */
+    fun sendText(context: Context, phone: String, message: String) {
+        val cleanPhone = phone.filter { it.isDigit() }
 
         try {
-            val intent = if (phone.isNotBlank()) {
+            val intent = if (cleanPhone.isNotBlank()) {
                 // API oficial de click-to-chat de WhatsApp.
                 Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse("https://wa.me/$phone?text=${Uri.encode(message)}")
+                    Uri.parse("https://wa.me/$cleanPhone?text=${Uri.encode(message)}")
                 )
             } else {
                 Intent(Intent.ACTION_SEND).apply {

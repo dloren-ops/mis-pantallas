@@ -18,4 +18,6 @@ class AccountRepository(private val dao: AccountDao) {
     }
 
     suspend fun delete(account: Account) = dao.delete(account)
+
+    suspend fun deleteAll(accounts: List<Account>) = dao.deleteAll(accounts)
 }

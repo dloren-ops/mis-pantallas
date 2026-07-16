@@ -1,0 +1,13 @@
+{
+  "name": "mispantallas-publish-update",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compila el APK de release y publica la actualizacion en Firebase (Storage + Firestore) para que la app avise a los clientes.",
+  "main": "publish.js",
+  "scripts": {
+    "publish": "node publish.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

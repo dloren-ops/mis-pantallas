@@ -4,7 +4,10 @@
     <!-- Pantalla principal -->
     <string name="title_accounts">Mis Pantallas</string>
     <string name="add_account">Agregar cuenta</string>
-    <string name="no_accounts">Todavía no tenés cuentas guardadas.\nTocá + para agregar una.</string>
+    <string name="no_accounts">Todavía no tenés pantallas alquiladas.\nAsigná un cliente desde \"Nuevas\" para verlas acá.</string>
+    <string name="search_placeholder">Buscar por teléfono o correo</string>
+    <string name="clear_search">Limpiar búsqueda</string>
+    <string name="no_search_results">No se encontraron resultados para tu búsqueda.</string>
 
     <!-- Formulario -->
     <string name="new_account">Nueva cuenta</string>
@@ -15,17 +18,39 @@
     <string name="field_pin">PIN</string>
     <string name="field_platform">Plataforma</string>
     <string name="field_client_phone">WhatsApp del cliente (con código de país)</string>
+    <string name="field_duration_quick">Duración rápida</string>
     <string name="field_duration">Duración del alquiler (días)</string>
     <string name="field_start_date">Fecha de inicio</string>
+    <string name="field_price">Precio del alquiler</string>
     <string name="save">Guardar</string>
     <string name="delete">Eliminar</string>
 
+    <!-- Sincronizar correo entre perfiles del mismo login al cambiarlo -->
+    <string name="email_sync_confirm_title">Correo cambiado</string>
+    <string name="email_sync_confirm_message">Encontramos %1$d pantalla(s) más con el correo anterior. ¿Querés actualizarles también el correo a %2$s?</string>
+    <string name="email_sync_yes">Sí, actualizar también</string>
+    <string name="email_sync_no">No, dejar solo esta</string>
+
+    <!-- Sección proveedor (para diferenciar cuándo le pago al proveedor de cuándo le cobro al cliente) -->
+    <string name="field_provider_section">Proveedor</string>
+    <string name="field_provider_section_hint">Opcional: si renovás con el proveedor en un ciclo distinto al del cliente.</string>
+    <string name="field_renew_every_days">Renovar con el proveedor cada (días)</string>
+    <string name="field_provider_start_date">Fecha de inicio con el proveedor</string>
+    <string name="provider_start_same_as_client">Igual que la fecha de inicio del cliente</string>
+    <string name="provider_start_clear">Usar la misma que el cliente</string>
+
     <!-- Cuenta regresiva -->
     <string name="days_left">%1$d días restantes</string>
-    <string name="one_day_left">1 día restante</string>
     <string name="last_day">Último día</string>
     <string name="expired">Vencido</string>
+    <string name="expired_today">Venció hoy</string>
     <string name="expired_ago">Vencido hace %1$d días</string>
+
+    <!-- Cuenta regresiva de renovación con el proveedor (distinta del vencimiento del cliente) -->
+    <string name="provider_days_left">Proveedor: %1$d días restantes</string>
+    <string name="provider_last_day">Proveedor: último día</string>
+    <string name="provider_expired_today">Proveedor: vence hoy</string>
+    <string name="provider_expired_ago">Proveedor: vencido hace %1$d días</string>
 
     <!-- WhatsApp -->
     <string name="send_whatsapp">Enviar por WhatsApp</string>
@@ -34,4 +59,156 @@
 
     <!-- Mensaje predeterminado de WhatsApp -->
     <string name="default_whatsapp_message">¡Hola! Estos son los datos de tu cuenta:</string>
+
+    <!-- Recordatorio de renovación al cliente -->
+    <string name="send_renewal_reminder">Preguntar por renovación</string>
+    <string name="default_renewal_reminder_message">¡Hola! 👋 Espero que estés muy bien. Te escribo porque {plataforma} vence el {fecha}. ¿Te gustaría renovar?</string>
+    <string name="renewal_reminder_platform_phrase">tu pantalla de %1$s</string>
+    <string name="renewal_reminder_platform_phrase_generic">tu pantalla</string>
+
+    <!-- Licencia de la app -->
+    <string name="license_enter_code">Ingresá tu código de acceso</string>
+    <string name="license_code_hint">Código</string>
+    <string name="license_continue">Continuar</string>
+    <string name="license_invalid_code">Código inválido. Verificá con el administrador.</string>
+    <string name="license_code_in_use">Este código ya está activado en otro dispositivo.</string>
+    <string name="license_readonly_banner">Licencia vencida. Modo solo lectura: contactá al administrador para renovar.</string>
+    <string name="license_am_admin">¿Sos el administrador?</string>
+    <string name="admin_login_email">Correo</string>
+    <string name="admin_login_password">Contraseña</string>
+    <string name="admin_login_button">Ingresar</string>
+    <string name="admin_login_error">No se pudo iniciar sesión. Verificá tus datos.</string>
+    <string name="admin_title">Panel de administración</string>
+    <string name="admin_new_client">Nuevo cliente</string>
+    <string name="admin_client_name">Nombre del cliente</string>
+    <string name="admin_client_phone">WhatsApp del cliente (con código de país)</string>
+    <string name="admin_client_create">Crear</string>
+    <string name="admin_client_code_generated">Código generado para el cliente:</string>
+    <string name="copy">Copiar</string>
+    <string name="code_copied">Código copiado.</string>
+    <string name="admin_no_clients">Todavía no activaste ningún cliente.</string>
+    <string name="admin_client_expires">Vence: %1$s</string>
+    <string name="admin_client_never_activated">Sin activar</string>
+    <string name="admin_client_device_bound">Vinculado a un dispositivo</string>
+    <string name="close">Cerrar</string>
+
+    <!-- Menú de exportar/importar -->
+    <string name="menu">Menú</string>
+    <string name="backup_title">Copia de seguridad</string>
+    <string name="export_data">Exportar datos</string>
+    <string name="import_data">Importar datos</string>
+    <string name="export_success">Datos exportados correctamente.</string>
+    <string name="import_success">Datos importados correctamente.</string>
+    <string name="import_error">No se pudo leer el archivo. Verificá que sea un respaldo válido.</string>
+    <string name="send_backup_email">Enviar respaldo por correo</string>
+    <string name="backup_email_subject">Respaldo de Mis Pantallas — %1$s</string>
+    <string name="backup_email_error">No se pudo preparar el respaldo para enviar.</string>
+
+    <!-- Crear perfiles en bloque / pantalla Nuevas -->
+    <string name="create_profiles">Crear perfiles</string>
+    <string name="create_profiles_title">Crear perfiles nuevos</string>
+    <string name="profile_count_label">Cantidad de perfiles</string>
+    <string name="new_profiles_title">Nuevas</string>
+    <string name="no_new_profiles">No tenés perfiles nuevos pendientes de enviar.</string>
+
+    <!-- Ajustes -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_menu_item">Ajustes</string>
+    <string name="settings_profile_names_section">Nombres por defecto de los perfiles</string>
+    <string name="settings_profile_name_hint">Perfil %1$d</string>
+    <string name="settings_saved">Ajustes guardados.</string>
+    <string name="platform_other">Otra</string>
+    <string name="settings_whatsapp_message_section">Mensaje de WhatsApp</string>
+    <string name="settings_whatsapp_message_hint">Encabezado: se muestra al principio al enviar los datos de una cuenta por WhatsApp. Dejalo vacío para usar el mensaje predeterminado.</string>
+    <string name="field_whatsapp_header">Encabezado</string>
+    <string name="settings_whatsapp_footer_hint">Mensaje final: se agrega al final, después de los datos de la cuenta. Dejalo vacío para no agregar nada.</string>
+    <string name="field_whatsapp_footer">Mensaje final</string>
+    <string name="settings_renewal_reminder_section">Mensaje de renovación</string>
+    <string name="settings_renewal_reminder_hint">Mensaje que se envía al preguntarle a un cliente si desea renovar. Usá {plataforma} y {fecha} para incluir la plataforma y la fecha de vencimiento. Dejalo vacío para usar el mensaje predeterminado.</string>
+    <string name="field_renewal_reminder_message">Mensaje de renovación</string>
+    <string name="settings_reminder_section">Recordatorio de vencimiento</string>
+    <string name="settings_reminder_hint">Con cuántos días de anticipación te avisamos que una pantalla está por vencer.</string>
+    <string name="field_reminder_days">Días de anticipación</string>
+
+    <!-- Renovaciones -->
+    <string name="renewals_title">Renovaciones</string>
+    <string name="no_renewals">No tenés pantallas activas para renovar.</string>
+    <string name="renewal_edit_title">Editar renovación</string>
+    <string name="renewal_delete_confirm_title">Eliminar cuenta del proveedor</string>
+    <string name="renewal_delete_confirm_message">Esto elimina esta cuenta y todas las pantallas de "Mis Pantallas" que usen el mismo correo. No se puede deshacer. ¿Continuar?</string>
+    <string name="renewal_pause_action">Pasar a cuentas en pausa</string>
+    <string name="renewal_pause_confirm_title">Pasar a cuentas en pausa</string>
+    <string name="renewal_pause_confirm_message">Esto guarda el correo y la contraseña en "Cuentas en pausa" y elimina esta cuenta (y las pantallas con el mismo correo) de "Mis Pantallas". Ya no aparecerá en Renovaciones. ¿Continuar?</string>
+
+    <!-- Recordatorios (notificaciones) -->
+    <string name="notification_channel_renewals">Vencimientos y renovaciones</string>
+    <string name="notification_renewals_title">Pantallas por vencer</string>
+    <string name="notification_single_body">%1$s (%2$s) necesita renovación</string>
+    <string name="notification_multiple_body">%1$d pantallas están por vencer o ya vencieron</string>
+    <string name="notification_generic_platform">Cuenta</string>
+
+    <!-- Clientes -->
+    <string name="clients_title">Clientes</string>
+    <string name="no_clients">Todavía no tenés clientes con pantallas alquiladas.</string>
+    <string name="screens_count">%1$d pantalla(s)</string>
+
+    <!-- Ingresos -->
+    <string name="income_title">Ingresos</string>
+    <string name="income_active_total">Ingreso de alquileres activos</string>
+    <string name="income_monthly_estimate">Estimado mensual</string>
+    <string name="income_by_platform">Por plataforma</string>
+    <string name="no_income">Todavía no hay pantallas alquiladas con precio cargado.</string>
+
+    <!-- Cambiar entre Nueva y Alquilada -->
+    <string name="mark_as_rented">Marcar como alquilada</string>
+    <string name="mark_as_new">Marcar como nueva</string>
+    <string name="mark_as_new_confirm">¿Quitar el WhatsApp del cliente y mover esta pantalla a \"Nuevas\"?</string>
+
+    <!-- Correos guardados -->
+    <string name="saved_credentials_title">Correos guardados</string>
+    <string name="saved_credentials_empty">Todavía no guardaste ningún correo.\nTocá + para agregar uno.</string>
+    <string name="saved_credentials_add">Guardar correo</string>
+    <string name="saved_credentials_use">Usar</string>
+    <string name="saved_credentials_note">Nota (opcional)</string>
+
+    <!-- Cuentas en pausa -->
+    <string name="paused_accounts_title">Cuentas en pausa</string>
+    <string name="paused_accounts_empty">Todavía no tenés cuentas en pausa.\nTocá + para agregar una.</string>
+    <string name="paused_accounts_add">Agregar cuenta en pausa</string>
+
+    <!-- Filtro por plataforma -->
+    <string name="filter_all_platforms">Todas</string>
+
+    <!-- Confirmación al eliminar cuenta -->
+    <string name="delete_account_confirm_title">Eliminar cuenta</string>
+    <string name="delete_account_confirm_message">Esta acción no se puede deshacer. ¿Seguro que querés eliminar esta cuenta?</string>
+
+    <!-- Selección múltiple / eliminación en lote -->
+    <string name="selected_count">%1$d seleccionadas</string>
+    <string name="cancel_selection">Cancelar selección</string>
+    <string name="delete_selected_accounts_title">Eliminar cuentas seleccionadas</string>
+    <string name="delete_selected_accounts_confirm">Esta acción no se puede deshacer. ¿Seguro que querés eliminar %1$d cuenta(s) seleccionada(s)?</string>
+    <string name="delete_client_title">Eliminar cliente</string>
+    <string name="delete_client_confirm">Esta acción eliminará las %1$d pantalla(s) de este cliente y no se puede deshacer. ¿Continuar?</string>
+
+    <!-- Historial de pagos -->
+    <string name="payments_section_title">Historial de pagos</string>
+    <string name="no_payments">Todavía no registraste ningún pago para esta pantalla.</string>
+    <string name="add_payment">Registrar pago</string>
+    <string name="field_payment_amount">Monto pagado</string>
+    <string name="field_payment_date">Fecha del pago</string>
+    <string name="field_payment_note">Nota (opcional)</string>
+
+    <!-- Actualización propia (fuera de Play Store) -->
+    <string name="update_available_title">Actualización disponible (v%1$s)</string>
+    <string name="update_available_message">Hay una nueva versión de Mis Pantallas disponible.</string>
+    <string name="update_now">Actualizar ahora</string>
+    <string name="update_later">Más tarde</string>
+    <string name="update_downloading">Descargando…</string>
+    <string name="update_needs_install_permission">Activá "Instalar apps desconocidas" para esta app y volvé a tocar Actualizar.</string>
+    <string name="update_download_error">No se pudo descargar la actualización. Probá de nuevo más tarde.</string>
+    <string name="check_for_updates">Buscar actualizaciones</string>
+    <string name="checking_for_updates">Buscando…</string>
+    <string name="update_up_to_date">Ya tenés la última versión.</string>
+    <string name="update_check_error">No se pudo verificar. Revisá tu conexión.</string>
 </resources>
