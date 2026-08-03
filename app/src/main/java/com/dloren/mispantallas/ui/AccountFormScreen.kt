@@ -231,7 +231,6 @@ fun AccountFormScreen(
                 label = { Text(stringResource(R.string.field_client_phone)) },
                 singleLine = true,
                 readOnly = isReadOnly,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()
             )
             Text(

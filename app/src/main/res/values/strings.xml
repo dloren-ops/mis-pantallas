@@ -17,7 +17,7 @@
     <string name="field_profile">Nombre de perfil</string>
     <string name="field_pin">PIN</string>
     <string name="field_platform">Plataforma</string>
-    <string name="field_client_phone">WhatsApp del cliente (con código de país)</string>
+    <string name="field_client_phone">Cliente (nombre o WhatsApp con código de país)</string>
     <string name="field_duration_quick">Duración rápida</string>
     <string name="field_duration">Duración del alquiler (días)</string>
     <string name="field_start_date">Fecha de inicio</string>
