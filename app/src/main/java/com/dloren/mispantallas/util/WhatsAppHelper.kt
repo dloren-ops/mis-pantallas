@@ -113,35 +113,33 @@ object WhatsAppHelper {
         val cleanPhone = phone.filter { it.isDigit() }
 
         try {
-            val intent = if (cleanPhone.isNotBlank()) {
-                // API oficial de click-to-chat de WhatsApp.
-                Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("https://wa.me/$cleanPhone?text=${Uri.encode(message)}")
+            if (cleanPhone.isNotBlank()) {
+                // API oficial de click-to-chat de WhatsApp: abre el chat directo
+                // (funciona con WhatsApp normal y con Business, según cuál tenga
+                // el número registrado o cuál elija el sistema si hay ambas).
+                context.startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://wa.me/$cleanPhone?text=${Uri.encode(message)}")
+                    )
                 )
             } else {
-                Intent(Intent.ACTION_SEND).apply {
+                // Sin número (se usó un alias/@usuario): no se puede armar un link
+                // de chat directo, así que se deja que el usuario elija la app y el
+                // contacto. No se fuerza el paquete "com.whatsapp" porque eso
+                // ignora WhatsApp Business si ambas apps están instaladas.
+                val send = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    setPackage("com.whatsapp")
                     putExtra(Intent.EXTRA_TEXT, message)
                 }
+                context.startActivity(Intent.createChooser(send, null))
             }
-            context.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
-            // Reintento genérico (sin forzar paquete) por si usa WhatsApp Business.
-            try {
-                val fallback = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, message)
-                }
-                context.startActivity(Intent.createChooser(fallback, null))
-            } catch (e2: ActivityNotFoundException) {
-                Toast.makeText(
-                    context,
-                    R.string.whatsapp_not_installed,
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            Toast.makeText(
+                context,
+                R.string.whatsapp_not_installed,
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
