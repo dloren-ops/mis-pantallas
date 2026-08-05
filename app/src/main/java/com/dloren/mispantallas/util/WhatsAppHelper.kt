@@ -108,9 +108,27 @@ object WhatsAppHelper {
         sendText(context, account.clientPhone, buildMessage(context, account, customHeader, customFooter))
     }
 
+    /** Caracteres de formato típicos de un teléfono (se ignoran al validar). */
+    private val PHONE_FORMATTING_CHARS = Regex("[\\s()+-]")
+
+    /** Cantidad de dígitos que debe tener, como mínimo, un teléfono real con código de país. */
+    private const val MIN_PHONE_DIGITS = 8
+
+    /**
+     * Devuelve los dígitos de [raw] solo si el texto realmente *es* un teléfono (además de
+     * dígitos, a lo sumo espacios/paréntesis/guiones/"+"), con una cantidad razonable de
+     * dígitos. Si es un alias/@usuario (aunque tenga números mezclados, como "@Marisol116")
+     * devuelve cadena vacía, para no armar un link de WhatsApp con esos dígitos sueltos.
+     */
+    private fun extractPhoneDigits(raw: String): String {
+        val stripped = raw.trim().replace(PHONE_FORMATTING_CHARS, "")
+        if (stripped.isEmpty() || !stripped.all { it.isDigit() }) return ""
+        return if (stripped.length >= MIN_PHONE_DIGITS) stripped else ""
+    }
+
     /** Abre WhatsApp con un texto arbitrario, sin depender de una [Account]. */
     fun sendText(context: Context, phone: String, message: String) {
-        val cleanPhone = phone.filter { it.isDigit() }
+        val cleanPhone = extractPhoneDigits(phone)
 
         try {
             if (cleanPhone.isNotBlank()) {
