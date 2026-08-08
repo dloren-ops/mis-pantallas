@@ -45,6 +45,25 @@ object WhatsAppHelper {
         customFooter: String = ""
     ): String {
         val header = customHeader.ifBlank { context.getString(R.string.default_whatsapp_message) }
+        return buildMessageWithHeader(header, account, customFooter)
+    }
+
+    /**
+     * Construye el aviso de cambio de correo: mismo cuerpo "clave: valor" que
+     * [buildMessage], pero con un encabezado fijo que aclara que el dato que
+     * cambió es el correo. [customFooter] es el mensaje final configurado en
+     * Ajustes (el mismo que usa [buildMessage]).
+     */
+    fun buildEmailChangeMessage(
+        context: Context,
+        account: Account,
+        customFooter: String = ""
+    ): String {
+        val header = context.getString(R.string.default_email_change_message)
+        return buildMessageWithHeader(header, account, customFooter)
+    }
+
+    private fun buildMessageWithHeader(header: String, account: Account, customFooter: String): String {
         val sb = StringBuilder()
         sb.appendLine(header)
         sb.appendLine()
@@ -106,6 +125,15 @@ object WhatsAppHelper {
         customFooter: String = ""
     ) {
         sendText(context, account.clientPhone, buildMessage(context, account, customHeader, customFooter))
+    }
+
+    /** Abre WhatsApp con el aviso de cambio de correo prellenado para el cliente de [account]. */
+    fun sendEmailChangeNotice(
+        context: Context,
+        account: Account,
+        customFooter: String = ""
+    ) {
+        sendText(context, account.clientPhone, buildEmailChangeMessage(context, account, customFooter))
     }
 
     /** Abre WhatsApp con un texto arbitrario, sin depender de una [Account]. */

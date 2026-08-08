@@ -47,11 +47,24 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** Actualiza el correo de un grupo de cuentas (p. ej. otros perfiles del mismo login). */
+    /**
+     * Actualiza el correo de un grupo de cuentas (p. ej. otros perfiles del mismo login)
+     * y las marca con aviso de cambio de correo pendiente, para que aparezcan en
+     * "Avisos de correo" hasta que se les mande el WhatsApp con el dato nuevo.
+     */
     fun updateEmailForAccounts(accounts: List<Account>, newEmail: String) {
         if (accounts.isEmpty()) return
         viewModelScope.launch {
-            accounts.forEach { repository.save(it.copy(email = newEmail)) }
+            accounts.forEach {
+                repository.save(it.copy(email = newEmail, emailChangeNoticePending = true))
+            }
+        }
+    }
+
+    /** Marca una pantalla como ya avisada del cambio de correo (se saca de "Avisos de correo"). */
+    fun markEmailChangeNoticeSent(account: Account) {
+        viewModelScope.launch {
+            repository.save(account.copy(emailChangeNoticePending = false))
         }
     }
 

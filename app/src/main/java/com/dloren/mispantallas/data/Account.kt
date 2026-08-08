@@ -33,7 +33,13 @@ data class Account(
     /** Momento en que arrancó la suscripción con el proveedor (puede diferir de [startDateMillis]). */
     val providerStartMillis: Long = 0L,
     /** Precio del alquiler por cada ciclo de [durationDays] (0 si no se cargó). */
-    val price: Double = 0.0
+    val price: Double = 0.0,
+    /**
+     * true si a esta pantalla se le cambió el correo y todavía no se le avisó
+     * al cliente por WhatsApp. Se usa para armar la lista de "Avisos de correo"
+     * pendientes de enviar.
+     */
+    val emailChangeNoticePending: Boolean = false
 ) {
     /** Primer día (fecha local) en que el alquiler deja de ser válido. */
     private val endLocalDate

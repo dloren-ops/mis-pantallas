@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.MarkEmailUnread
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Search
@@ -89,10 +90,12 @@ fun AccountListScreen(
     onOpenRenewals: () -> Unit = {},
     onOpenClients: () -> Unit = {},
     onOpenIncome: () -> Unit = {},
-    onOpenSavedCredentials: () -> Unit = {}
+    onOpenSavedCredentials: () -> Unit = {},
+    onOpenEmailChangeNotices: () -> Unit = {}
 ) {
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val pendingNewProfiles = remember(accounts) { accounts.count { it.clientPhone.isBlank() } }
+    val pendingEmailNotices = remember(accounts) { accounts.count { it.emailChangeNoticePending } }
     val rentedAccounts = remember(accounts) { accounts.filter { it.clientPhone.isNotBlank() } }
     var searchQuery by remember { mutableStateOf("") }
     var selectedPlatform by remember { mutableStateOf<String?>(null) }
@@ -137,6 +140,18 @@ fun AccountListScreen(
                     IconButton(onClick = onOpenRenewals) {
                         Icon(Icons.Filled.Autorenew, contentDescription = stringResource(R.string.renewals_title))
                     }
+                    if (pendingEmailNotices > 0) {
+                        BadgedBox(
+                            badge = { Badge { Text(pendingEmailNotices.toString()) } }
+                        ) {
+                            IconButton(onClick = onOpenEmailChangeNotices) {
+                                Icon(
+                                    Icons.Filled.MarkEmailUnread,
+                                    contentDescription = stringResource(R.string.email_change_notices_title)
+                                )
+                            }
+                        }
+                    }
                     BadgedBox(
                         badge = {
                             if (pendingNewProfiles > 0) {
@@ -175,6 +190,13 @@ fun AccountListScreen(
                             onClick = {
                                 showMenu = false
                                 onOpenSavedCredentials()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.email_change_notices_title)) },
+                            onClick = {
+                                showMenu = false
+                                onOpenEmailChangeNotices()
                             }
                         )
                         if (!isReadOnly) {

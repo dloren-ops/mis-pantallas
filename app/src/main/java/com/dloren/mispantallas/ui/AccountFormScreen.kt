@@ -113,6 +113,9 @@ fun AccountFormScreen(
     // tal cual si la cuenta vino de un respaldo importado (no reiniciarlos al guardar).
     var status by rememberSaveable(accountId) { mutableStateOf(prefill?.status ?: "SOLD") }
     var soldDateMillis by rememberSaveable(accountId) { mutableStateOf(prefill?.soldDateMillis ?: 0L) }
+    var emailChangeNoticePending by rememberSaveable(accountId) {
+        mutableStateOf(prefill?.emailChangeNoticePending ?: false)
+    }
     var showDatePicker by remember { mutableStateOf(false) }
     var showProviderDatePicker by remember { mutableStateOf(false) }
 
@@ -134,6 +137,7 @@ fun AccountFormScreen(
                 providerStartMillis = acc.providerStartMillis
                 status = acc.status
                 soldDateMillis = acc.soldDateMillis
+                emailChangeNoticePending = acc.emailChangeNoticePending
             }
             loaded = true
         }
@@ -153,7 +157,8 @@ fun AccountFormScreen(
         soldDateMillis = soldDateMillis,
         renewEveryDays = renewEveryDaysText.toIntOrNull()?.coerceAtLeast(0) ?: 0,
         providerStartMillis = providerStartMillis,
-        price = price.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+        price = price.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0,
+        emailChangeNoticePending = emailChangeNoticePending
     )
 
     Scaffold(
@@ -330,10 +335,14 @@ fun AccountFormScreen(
                 Button(
                     onClick = {
                         val newEmail = email.trim()
-                        val siblings = if (isEditing && newEmail.isNotBlank() &&
+                        val emailChanged = isEditing && newEmail.isNotBlank() &&
                             originalEmail.isNotBlank() &&
                             !newEmail.equals(originalEmail.trim(), ignoreCase = true)
-                        ) {
+                        // Si cambió el correo, esta pantalla (y las que se sincronicen abajo)
+                        // quedan marcadas para avisarle al cliente por WhatsApp: se pueden
+                        // enviar de una con el botón de abajo, o más tarde desde "Avisos de correo".
+                        if (emailChanged) emailChangeNoticePending = true
+                        val siblings = if (emailChanged) {
                             allAccounts.filter {
                                 it.id != accountId && it.email.equals(originalEmail.trim(), ignoreCase = true)
                             }
@@ -352,7 +361,18 @@ fun AccountFormScreen(
                 }
 
                 OutlinedButton(
-                    onClick = { WhatsAppHelper.sendToWhatsApp(context, buildAccount(), whatsappMessage, whatsappFooter) },
+                    onClick = {
+                        val account = buildAccount()
+                        if (account.emailChangeNoticePending) {
+                            WhatsAppHelper.sendEmailChangeNotice(context, account, whatsappFooter)
+                            // Se saca la marca de pendiente del estado del formulario: si
+                            // había ediciones sin guardar, se guardan ya sin la marca al
+                            // tocar "Guardar" más abajo, sin pisar nada con datos viejos.
+                            emailChangeNoticePending = false
+                        } else {
+                            WhatsAppHelper.sendToWhatsApp(context, account, whatsappMessage, whatsappFooter)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)

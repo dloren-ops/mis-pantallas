@@ -37,6 +37,7 @@ import com.dloren.mispantallas.ui.AppUpdateViewModel
 import com.dloren.mispantallas.ui.UpdateAvailableDialog
 import com.dloren.mispantallas.ui.BackupScreen
 import com.dloren.mispantallas.ui.ClientsScreen
+import com.dloren.mispantallas.ui.EmailChangeNoticesScreen
 import com.dloren.mispantallas.ui.IncomeScreen
 import com.dloren.mispantallas.ui.LicenseGateScreen
 import com.dloren.mispantallas.ui.LicenseState
@@ -173,7 +174,18 @@ class MainActivity : ComponentActivity() {
                             onOpenRenewals = { navController.navigate(Routes.RENEWALS) },
                             onOpenClients = { navController.navigate(Routes.CLIENTS) },
                             onOpenIncome = { navController.navigate(Routes.INCOME) },
-                            onOpenSavedCredentials = { navController.navigate(Routes.SAVED_CREDENTIALS) }
+                            onOpenSavedCredentials = { navController.navigate(Routes.SAVED_CREDENTIALS) },
+                            onOpenEmailChangeNotices = { navController.navigate(Routes.EMAIL_CHANGE_NOTICES) }
+                        )
+                    }
+                    composable(Routes.EMAIL_CHANGE_NOTICES) {
+                        val isReadOnly = (licenseState as? LicenseState.Client)?.isReadOnly ?: false
+                        EmailChangeNoticesScreen(
+                            viewModel = viewModel,
+                            settingsViewModel = settingsViewModel,
+                            onAccountClick = { id -> navController.navigate("${Routes.FORM}/$id") },
+                            onBack = { navController.popBackStack() },
+                            isReadOnly = isReadOnly
                         )
                     }
                     composable(Routes.CLIENTS) {
@@ -419,6 +431,7 @@ class MainActivity : ComponentActivity() {
         const val INCOME = "income"
         const val SAVED_CREDENTIALS = "saved_credentials"
         const val PAUSED_ACCOUNTS = "paused_accounts"
+        const val EMAIL_CHANGE_NOTICES = "email_change_notices"
     }
 
     companion object {

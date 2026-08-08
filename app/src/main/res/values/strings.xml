@@ -31,6 +31,11 @@
     <string name="email_sync_yes">Sí, actualizar también</string>
     <string name="email_sync_no">No, dejar solo esta</string>
 
+    <!-- Avisos de cambio de correo pendientes de enviar -->
+    <string name="email_change_notices_title">Avisos de correo</string>
+    <string name="no_email_change_notices">No tenés avisos de cambio de correo pendientes de enviar.</string>
+    <string name="default_email_change_message">¡Hola! 👋 Te cambiamos el correo de tu cuenta. Estos son los datos actualizados:</string>
+
     <!-- Sección proveedor (para diferenciar cuándo le pago al proveedor de cuándo le cobro al cliente) -->
     <string name="field_provider_section">Proveedor</string>
     <string name="field_provider_section_hint">Opcional: si renovás con el proveedor en un ciclo distinto al del cliente.</string>

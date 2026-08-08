@@ -24,6 +24,7 @@ object AccountBackup {
             obj.put("renewEveryDays", account.renewEveryDays)
             obj.put("providerStartMillis", account.providerStartMillis)
             obj.put("price", account.price)
+            obj.put("emailChangeNoticePending", account.emailChangeNoticePending)
             array.put(obj)
         }
         val root = JSONObject()
@@ -58,7 +59,8 @@ object AccountBackup {
                 soldDateMillis = obj.optLong("soldDateMillis", 0L),
                 renewEveryDays = obj.optInt("renewEveryDays", 0),
                 providerStartMillis = obj.optLong("providerStartMillis", 0L),
-                price = obj.optDouble("price", 0.0)
+                price = obj.optDouble("price", 0.0),
+                emailChangeNoticePending = obj.optBoolean("emailChangeNoticePending", false)
             )
         }
     }
