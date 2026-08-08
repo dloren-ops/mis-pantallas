@@ -1,5 +1,6 @@
 package com.dloren.mispantallas.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,11 +17,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -84,6 +88,9 @@ fun AccountFormScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showAddPaymentDialog by remember { mutableStateOf(false) }
     var siblingsToSync by remember { mutableStateOf<List<Account>>(emptyList()) }
+    var selectedSiblingIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var accountsToNotify by remember { mutableStateOf<List<Account>>(emptyList()) }
+    var notifiedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     // Estado del formulario.
     var loaded by rememberSaveable(accountId) { mutableStateOf(false) }
@@ -341,6 +348,7 @@ fun AccountFormScreen(
                             emptyList()
                         }
                         if (siblings.isNotEmpty()) {
+                            selectedSiblingIds = siblings.map { it.id }.toSet()
                             siblingsToSync = siblings
                         } else {
                             viewModel.save(buildAccount()) { onDone() }
@@ -479,17 +487,68 @@ fun AccountFormScreen(
             onDismissRequest = {},
             title = { Text(stringResource(R.string.email_sync_confirm_title)) },
             text = {
-                Text(
-                    stringResource(R.string.email_sync_confirm_message, siblingsToSync.size, newEmail)
-                )
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 380.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.email_sync_confirm_message, siblingsToSync.size, newEmail)
+                    )
+                    siblingsToSync.forEach { sibling ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedSiblingIds = if (selectedSiblingIds.contains(sibling.id)) {
+                                        selectedSiblingIds - sibling.id
+                                    } else {
+                                        selectedSiblingIds + sibling.id
+                                    }
+                                },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = selectedSiblingIds.contains(sibling.id),
+                                // El toggle lo maneja el Modifier.clickable del Row: si el
+                                // Checkbox también respondiera al tap, un toque justo sobre
+                                // él dispararía los dos handlers y el marcado se "cancelaría".
+                                onCheckedChange = null
+                            )
+                            Column {
+                                Text(
+                                    text = sibling.clientPhone.ifBlank {
+                                        stringResource(R.string.email_sync_no_client)
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${sibling.platform} · ${sibling.profileName.ifBlank { "-" }}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val siblings = siblingsToSync
+                    val selected = siblingsToSync.filter { selectedSiblingIds.contains(it.id) }
                     siblingsToSync = emptyList()
-                    viewModel.save(buildAccount()) {
-                        viewModel.updateEmailForAccounts(siblings, newEmail)
-                        onDone()
+                    viewModel.save(buildAccount()) { savedId ->
+                        viewModel.updateEmailForAccounts(selected, newEmail)
+                        val updatedPrimary = buildAccount().copy(id = savedId)
+                        val toNotify = (listOf(updatedPrimary) + selected.map { it.copy(email = newEmail) })
+                            .filter { it.clientPhone.isNotBlank() }
+                        if (toNotify.isNotEmpty()) {
+                            notifiedIds = emptySet()
+                            accountsToNotify = toNotify
+                        } else {
+                            onDone()
+                        }
                     }
                 }) { Text(stringResource(R.string.email_sync_yes)) }
             },
@@ -498,6 +557,70 @@ fun AccountFormScreen(
                     siblingsToSync = emptyList()
                     viewModel.save(buildAccount()) { onDone() }
                 }) { Text(stringResource(R.string.email_sync_no)) }
+            }
+        )
+    }
+
+    if (accountsToNotify.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = {
+                accountsToNotify = emptyList()
+                onDone()
+            },
+            title = { Text(stringResource(R.string.email_notify_title)) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.email_notify_message),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    accountsToNotify.forEach { acc ->
+                        val sent = notifiedIds.contains(acc.id)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = acc.clientPhone,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${acc.platform} · ${acc.profileName.ifBlank { "-" }}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (sent) {
+                                Icon(
+                                    Icons.Filled.Check,
+                                    contentDescription = stringResource(R.string.email_notify_sent),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                TextButton(onClick = {
+                                    WhatsAppHelper.sendToWhatsApp(context, acc, whatsappMessage, whatsappFooter)
+                                    notifiedIds = notifiedIds + acc.id
+                                }) {
+                                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                                    Text(text = "  " + stringResource(R.string.send_whatsapp))
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    accountsToNotify = emptyList()
+                    onDone()
+                }) { Text(stringResource(R.string.close)) }
             }
         )
     }

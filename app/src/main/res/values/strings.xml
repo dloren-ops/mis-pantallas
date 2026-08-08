@@ -27,9 +27,15 @@
 
     <!-- Sincronizar correo entre perfiles del mismo login al cambiarlo -->
     <string name="email_sync_confirm_title">Correo cambiado</string>
-    <string name="email_sync_confirm_message">Encontramos %1$d pantalla(s) más con el correo anterior. ¿Querés actualizarles también el correo a %2$s?</string>
-    <string name="email_sync_yes">Sí, actualizar también</string>
+    <string name="email_sync_confirm_message">Encontramos %1$d pantalla(s) más con el correo anterior. Elegí a cuáles actualizar también a %2$s:</string>
+    <string name="email_sync_yes">Actualizar seleccionadas</string>
     <string name="email_sync_no">No, dejar solo esta</string>
+    <string name="email_sync_no_client">Sin cliente asignado</string>
+
+    <!-- Avisar por WhatsApp a los clientes afectados por un cambio de correo masivo -->
+    <string name="email_notify_title">Avisar a los clientes</string>
+    <string name="email_notify_message">El correo cambió para estas cuentas. Enviales el aviso por WhatsApp:</string>
+    <string name="email_notify_sent">Enviado</string>
 
     <!-- Sección proveedor (para diferenciar cuándo le pago al proveedor de cuándo le cobro al cliente) -->
     <string name="field_provider_section">Proveedor</string>
