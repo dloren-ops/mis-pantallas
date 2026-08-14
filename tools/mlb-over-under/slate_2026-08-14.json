@@ -1,0 +1,167 @@
+{
+  "date": "2026-08-14",
+  "source": "Lineas y abridores relevados por busqueda web (FanDuel Research, ESPN, MLB.com, Covers, SI).",
+  "caveats": [
+    "Los innings lanzados (ip) marcados con ip_estimated=true se estimaron a partir de record y ponches; solo Seth Lugo tiene IP confirmado.",
+    "offense_index queda en 1.00 (promedio de liga) para todo equipo sin carreras por juego confirmadas.",
+    "La sede de Tampa Bay en 2026 no pudo confirmarse; se asume Tropicana Field.",
+    "Los totales pueden haberse movido despues del relevamiento."
+  ],
+  "games": [
+    {
+      "away": "Brewers",
+      "home": "Dodgers",
+      "venue": "Dodger Stadium",
+      "total_line": 7.5,
+      "over_odds": -124,
+      "under_odds": 102,
+      "away_starter": { "name": "Robert Gasser" },
+      "home_starter": { "name": "Yoshinobu Yamamoto" },
+      "notes": "Abridores confirmados, sin ERA relevado."
+    },
+    {
+      "away": "Mariners",
+      "home": "Astros",
+      "venue": "Daikin Park",
+      "total_line": 8.5,
+      "over_odds": 100,
+      "under_odds": -122,
+      "away_starter": { "name": "TBD" },
+      "home_starter": { "name": "TBD" },
+      "notes": "Abridores no relevados."
+    },
+    {
+      "away": "Red Sox",
+      "home": "Pirates",
+      "venue": "PNC Park",
+      "total_line": 8.0,
+      "over_odds": -105,
+      "under_odds": -115,
+      "away_starter": { "name": "TBD" },
+      "home_starter": { "name": "TBD" },
+      "notes": "Abridores no relevados."
+    },
+    {
+      "away": "White Sox",
+      "home": "Tigers",
+      "venue": "Comerica Park",
+      "total_line": 8.5,
+      "over_odds": -120,
+      "under_odds": -102,
+      "away_starter": { "name": "Anthony Kay" },
+      "home_starter": { "name": "Jackson Jobe" },
+      "notes": "Abridores confirmados, sin ERA relevado."
+    },
+    {
+      "away": "Orioles",
+      "home": "Rays",
+      "venue": "Tropicana Field",
+      "total_line": 8.5,
+      "over_odds": 102,
+      "under_odds": -124,
+      "away_starter": { "name": "TBD" },
+      "home_starter": { "name": "TBD" },
+      "notes": "Abridores no relevados; sede 2026 sin confirmar."
+    },
+    {
+      "away": "Diamondbacks",
+      "home": "Braves",
+      "venue": "Truist Park",
+      "total_line": 8.5,
+      "over_odds": 102,
+      "under_odds": -124,
+      "away_starter": { "name": "TBD" },
+      "home_starter": { "name": "Chris Sale" },
+      "home_offense_index": 1.116,
+      "notes": "Braves 4.91 carreras/juego confirmadas. ERA de Sale no relevado."
+    },
+    {
+      "away": "Yankees",
+      "home": "Blue Jays",
+      "venue": "Rogers Centre",
+      "total_line": 8.0,
+      "over_odds": -110,
+      "under_odds": -110,
+      "away_starter": { "name": "Gerrit Cole", "era": 3.35, "ip": 100, "ip_estimated": true },
+      "home_starter": { "name": "Shane Bieber", "era": 5.48, "ip": 60, "ip_estimated": true },
+      "notes": "Ambas ofensivas frias segun reportes (NYY .208 en 24 juegos, TOR .239 en 26)."
+    },
+    {
+      "away": "Padres",
+      "home": "Guardians",
+      "venue": "Progressive Field",
+      "total_line": 7.5,
+      "over_odds": -110,
+      "under_odds": -110,
+      "away_starter": { "name": "Michael King", "era": 3.37, "ip": 125, "ip_estimated": true },
+      "home_starter": { "name": "Gavin Williams", "era": 3.55, "ip": 150, "ip_estimated": true },
+      "notes": "Cuotas del total no relevadas; se asume -110/-110."
+    },
+    {
+      "away": "Rockies",
+      "home": "Giants",
+      "venue": "Oracle Park",
+      "total_line": 7.5,
+      "over_odds": -115,
+      "under_odds": -105,
+      "away_starter": { "name": "Kyle Freeland", "era": 6.63, "ip": 110, "ip_estimated": true },
+      "home_starter": { "name": "Landen Roupp", "era": 4.22, "ip": 140, "ip_estimated": true },
+      "notes": "Se juega en San Francisco, no en Coors Field."
+    },
+    {
+      "away": "Royals",
+      "home": "Angels",
+      "venue": "Angel Stadium",
+      "total_line": 8.5,
+      "over_odds": -110,
+      "under_odds": -110,
+      "away_starter": { "name": "Seth Lugo", "era": 4.41, "ip": 134.67 },
+      "home_starter": { "name": "Grayson Rodriguez" },
+      "notes": "Lugo con IP confirmados. ERA de Rodriguez no relevado."
+    },
+    {
+      "away": "Cardinals",
+      "home": "Cubs",
+      "venue": "Wrigley Field",
+      "total_line": 8.0,
+      "over_odds": -110,
+      "under_odds": -110,
+      "away_starter": { "name": "Matthew Liberatore", "era": 5.15, "ip": 120, "ip_estimated": true },
+      "home_starter": { "name": "Clay Holmes", "era": 2.86, "ip": 120, "ip_estimated": true },
+      "notes": "Algunas casas mostraban 8.5. Wrigley depende mucho del viento, no relevado."
+    },
+    {
+      "away": "Marlins",
+      "home": "Reds",
+      "venue": "Great American Ball Park",
+      "total_line": 8.0,
+      "over_odds": 108,
+      "under_odds": -117,
+      "away_starter": { "name": "Sandy Alcantara", "era": 3.52, "ip": 150, "ip_estimated": true },
+      "home_starter": { "name": "Chase Burns", "era": 2.61, "ip": 150, "ip_estimated": true },
+      "notes": "Duelo de abridores en el parque mas ofensivo del slate."
+    },
+    {
+      "away": "Nationals",
+      "home": "Mets",
+      "venue": "Citi Field",
+      "total_line": 8.5,
+      "over_odds": -110,
+      "under_odds": -110,
+      "away_starter": { "name": "Andrew Alvarez", "era": 3.76, "ip": 75, "ip_estimated": true },
+      "home_starter": { "name": "Robert Stock", "era": 10.13, "ip": 10, "ip_estimated": true },
+      "notes": "Stock es un abridor de emergencia: 10.13 ERA en muy pocos innings, fuertemente regresado."
+    },
+    {
+      "away": "Rangers",
+      "home": "Athletics",
+      "venue": "Sutter Health Park",
+      "total_line": 9.5,
+      "over_odds": -110,
+      "under_odds": -110,
+      "away_starter": { "name": "Kumar Rocker" },
+      "home_starter": { "name": "Gage Jump" },
+      "notes": "Total mas alto del slate. Abridores confirmados, sin ERA relevado."
+    }
+  ]
+}
