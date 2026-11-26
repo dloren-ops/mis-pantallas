@@ -63,6 +63,7 @@ fun AdminScreen(viewModel: LicenseViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     var showCreateDialog by remember { mutableStateOf(false) }
     var generatedCode by remember { mutableStateOf<ClientLicense?>(null) }
+    var sessionToClose by remember { mutableStateOf<ClientLicense?>(null) }
 
     LaunchedEffect(Unit) { viewModel.refreshClients() }
 
@@ -111,7 +112,8 @@ fun AdminScreen(viewModel: LicenseViewModel, onBack: () -> Unit) {
                 items(clients, key = { it.code }) { client ->
                     ClientCard(
                         client = client,
-                        onExtend = { months -> viewModel.extendClient(client.code, months) }
+                        onExtend = { months -> viewModel.extendClient(client.code, months) },
+                        onCloseSession = { sessionToClose = client }
                     )
                 }
             }
@@ -124,6 +126,31 @@ fun AdminScreen(viewModel: LicenseViewModel, onBack: () -> Unit) {
             onCreate = { name, phone ->
                 viewModel.createClient(name, phone) { license -> generatedCode = license }
                 showCreateDialog = false
+            }
+        )
+    }
+
+    sessionToClose?.let { client ->
+        AlertDialog(
+            onDismissRequest = { sessionToClose = null },
+            title = { Text(stringResource(R.string.admin_close_session)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.admin_close_session_confirm,
+                        client.name.ifBlank { client.code }
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.closeClientSession(client.code)
+                    Toast.makeText(context, R.string.admin_session_closed, Toast.LENGTH_SHORT).show()
+                    sessionToClose = null
+                }) { Text(stringResource(R.string.admin_close_session)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { sessionToClose = null }) { Text(stringResource(R.string.close)) }
             }
         )
     }
@@ -175,7 +202,11 @@ fun AdminScreen(viewModel: LicenseViewModel, onBack: () -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ClientCard(client: ClientLicense, onExtend: (Int) -> Unit) {
+private fun ClientCard(
+    client: ClientLicense,
+    onExtend: (Int) -> Unit,
+    onCloseSession: () -> Unit
+) {
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -213,6 +244,14 @@ private fun ClientCard(client: ClientLicense, onExtend: (Int) -> Unit) {
                 MONTH_PRESETS.forEach { (months, label) ->
                     OutlinedButton(onClick = { onExtend(months) }) {
                         Text(label)
+                    }
+                }
+                if (client.boundDeviceId.isNotBlank()) {
+                    OutlinedButton(onClick = onCloseSession) {
+                        Text(
+                            stringResource(R.string.admin_close_session),
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             }

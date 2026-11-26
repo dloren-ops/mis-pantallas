@@ -96,6 +96,9 @@
     <string name="admin_client_expires">Vence: %1$s</string>
     <string name="admin_client_never_activated">Sin activar</string>
     <string name="admin_client_device_bound">Vinculado a un dispositivo</string>
+    <string name="admin_close_session">Cerrar sesión</string>
+    <string name="admin_close_session_confirm">¿Cerrar la sesión de %1$s? Su app volverá a pedir el código y podrá usarlo en otro dispositivo.</string>
+    <string name="admin_session_closed">Sesión cerrada</string>
     <string name="close">Cerrar</string>
 
     <!-- Menú de exportar/importar -->

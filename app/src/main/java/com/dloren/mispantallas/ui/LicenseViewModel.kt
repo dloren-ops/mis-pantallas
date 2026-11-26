@@ -80,6 +80,13 @@ class LicenseViewModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun refreshFromRemote(code: String) {
         val license = runCatching { repository.fetchByCode(code) }.getOrNull() ?: return
+        if (license.boundDeviceId != deviceId) {
+            // El administrador cerró la sesión de este dispositivo (o el código se
+            // vinculó a otro): se olvida el código y se vuelve a pedir.
+            prefs.clear()
+            _licenseState.value = LicenseState.NeedsCode
+            return
+        }
         prefs.saveLicense(code, license.expiresAtMillis)
         emitClientState(license.expiresAtMillis)
     }
@@ -106,7 +113,12 @@ class LicenseViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 else -> {
                     if (license.boundDeviceId.isBlank()) {
-                        runCatching { repository.bindDevice(trimmed, deviceId) }
+                        val bound = runCatching { repository.bindDevice(trimmed, deviceId) }
+                        if (bound.isFailure) {
+                            // Sin vínculo, la próxima revalidación cerraría la sesión.
+                            _codeInUse.value = true
+                            return@launch
+                        }
                     }
                     prefs.saveLicense(trimmed, license.expiresAtMillis)
                     emitClientState(license.expiresAtMillis)
@@ -154,6 +166,15 @@ class LicenseViewModel(app: Application) : AndroidViewModel(app) {
     fun extendClient(code: String, months: Int) {
         viewModelScope.launch {
             runCatching { repository.activate(code, months) }
+                .onSuccess { refreshClients() }
+                .onFailure { e -> _adminError.value = e.message }
+        }
+    }
+
+    /** Cierra la sesión del cliente [code] en su dispositivo. */
+    fun closeClientSession(code: String) {
+        viewModelScope.launch {
+            runCatching { repository.releaseDevice(code) }
                 .onSuccess { refreshClients() }
                 .onFailure { e -> _adminError.value = e.message }
         }
