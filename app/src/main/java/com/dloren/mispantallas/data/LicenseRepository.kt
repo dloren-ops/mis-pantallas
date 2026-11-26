@@ -51,6 +51,15 @@ class LicenseRepository(
     }
 
     /**
+     * Cierra la sesión del cliente: desvincula el código del dispositivo actual.
+     * La app del cliente lo detecta al revalidar y vuelve a pedir el código, que
+     * entonces puede usarse en otro dispositivo. Solo para el administrador.
+     */
+    suspend fun releaseDevice(code: String) {
+        clients.document(code).update("boundDeviceId", "").await()
+    }
+
+    /**
      * Activa o renueva un cliente por [months] meses. Si el cliente sigue activo,
      * la extensión se suma a su vencimiento actual; si ya venció, cuenta desde ahora.
      */
